@@ -90,8 +90,6 @@ def main():
     register_workflow(executor)
 
     # 2) avvia worker
-    #worker = Worker(task_definition_name="generate_user_profile", executor=generate_user_profile) #va modificato o rimosso
-
     handler = TaskHandler(
         workers=[],
         configuration=config,
@@ -100,9 +98,6 @@ def main():
     handler.start_processes()
 
     # 3) avvia il workflow
-    #run = executor.start_workflow(name="tripmatch_workflow", version=1, workflow_input={"preferences": ["natura", "relax"]})
-    #print("Workflow avviato:", run)
-
     handler.join_processes()
     # Trigger the checkout workflow
     input_data = {"preferences": ["natura", "relax"]}
