@@ -90,10 +90,10 @@ def main():
     register_workflow(executor)
 
     # 2) avvia worker
-    worker = Worker(task_definition_name="generate_user_profile", executor=generate_user_profile) #va modificato o rimosso
-    #handler = TaskHandler(configuration=config, workers=[worker])
+    #worker = Worker(task_definition_name="generate_user_profile", executor=generate_user_profile) #va modificato o rimosso
+
     handler = TaskHandler(
-        workers=[worker],
+        workers=[],
         configuration=config,
         scan_for_annotated_workers=True
     )
