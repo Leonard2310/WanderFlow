@@ -33,12 +33,11 @@ def create_config():
 def register_workflow(executor: WorkflowExecutor) -> ConductorWorkflow:
 
     #Generazione del profilo dell'utente -> prende in input le preferenze dell'utente e cosa fa?
-    generate_profile_task = WorkflowTask(
-        name="generate_user_profile",
-        task_reference_name="t1",
-        input_parameters={"preferences": "${workflow.input.preferences}"},
-        type="SIMPLE"
+    generate_profile_task = SimpleTask(
+        task_def_name="generate_user_profile",
+        task_reference_name="generate_user_profile",
     )
+    #input_parameters={"preferences": "${workflow.input.preferences}"},
 
     #Prende il profilo dell'utente e 
 
