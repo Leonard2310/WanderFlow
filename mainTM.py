@@ -33,11 +33,42 @@ def create_config():
 def register_workflow(executor: WorkflowExecutor) -> ConductorWorkflow:
 
     #Generazione del profilo dell'utente -> prende in input le preferenze dell'utente e cosa fa?
-    generate_profile_task = SimpleTask(
-        task_def_name="generate_user_profile",
-        task_reference_name="generate_user_profile",
+    generate_profile_input = StartWorkflowRequest(
+        name="generate_user_profile",
+        version=1,
+        input={
+            "preferences": "${workflow.input.preferences}",
+        }
     )
-    #input_parameters={"preferences": "${workflow.input.preferences}"},
+    generate_profile_task = StartWorkflowTask(
+        task_ref_name="generate_user_profile_ref",
+        workflow_name="generate_user_profile",
+        start_workflow_request=generate_profile_input,
+        version=1
+    )
+
+    """DEFINIZIONI DI TASK ACCETTATE:
+    payment_task = SimpleTask(
+        task_def_name="process_payment",
+        task_reference_name="process_payment_ref"
+    )
+
+    start_email_workflow_input = StartWorkflowRequest(
+        name="email_receipt_workflow",
+        version=1,
+        input={
+            "customer_email": "${workflow.input.customer_email}",
+            "order_id": "${workflow.input.order_id}"
+        }
+    )
+
+    start_email_workflow_task = StartWorkflowTask(
+        task_ref_name="start_email_workflow_ref",
+        workflow_name="email_receipt_workflow",
+        start_workflow_request=start_email_workflow_input,
+        version=1
+    )
+    """
 
     #Prende il profilo dell'utente e 
 
@@ -46,6 +77,7 @@ def register_workflow(executor: WorkflowExecutor) -> ConductorWorkflow:
         executor=executor
     )
     workflow.version = 1
+    #aggiungo i task man mano che li definisco
     workflow.add(generate_profile_task)
     workflow.register(overwrite=True)
     return workflow
@@ -58,7 +90,7 @@ def main():
     register_workflow(executor)
 
     # 2) avvia worker
-    worker = Worker(task_definition_name="generate_user_profile", executor=generate_user_profile)
+    worker = Worker(task_definition_name="generate_user_profile", executor=generate_user_profile) #va modificato o rimosso
     #handler = TaskHandler(configuration=config, workers=[worker])
     handler = TaskHandler(
         workers=[worker],
