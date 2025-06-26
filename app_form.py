@@ -47,21 +47,30 @@ def workflow_started(workflow_id):
 @app.route("/wait_task/<workflow_id>")
 def wait_task(workflow_id):
     wf = executor.get_workflow(workflow_id=workflow_id, include_tasks=True)
-    for t in wf.tasks:
-        # Estrai referenceName, status e taskId indipendentemente dal tipo di oggetto
-        if isinstance(t, dict):
-            ref_name = t.get("taskReferenceName") or t.get("task_reference_name")
-            status   = t.get("status")
-            tid      = t.get("taskId") or t.get("task_id")
-        else:
-            ref_name = getattr(t, "task_reference_name", None) or getattr(t, "taskReferenceName", None)
-            status   = getattr(t, "status", None)
-            tid      = getattr(t, "task_id", None) or getattr(t, "taskId", None)
+    details = []
 
+    for t in wf.tasks:
+        # Usa gli attributi corretti esposti dal modello Task
+        ref_name = getattr(t, "reference_task_name", None)
+        status   = getattr(t, "status", None)
+        tid      = getattr(t, "task_id", None)
+
+        # Log per debug
+        app.logger.debug(f"Task found: ref_name={ref_name}, status={status}, task_id={tid}")
+
+        # Se è il nostro WaitUserRequest in corso, reindirizza al form
         if ref_name == "WaitUserRequest" and status == "IN_PROGRESS" and tid:
             return redirect(url_for("form", task_id=tid))
 
-    return "<p>Nessun task disponibile al momento. Ricarica questa pagina fra qualche secondo.</p>"
+        details.append(f"{ref_name} ➞ {status} (id={tid})")
+
+    # Se non lo trova, mostra messaggio + elenco per debug
+    return (
+        "<p>Nessun task disponibile al momento. Ricarica questa pagina fra qualche secondo.</p>"
+        "<h3>Debug tasks:</h3><pre>"
+        + "\n".join(details) +
+        "</pre>"
+    )
 
 @app.route("/form/<task_id>")
 def form(task_id):
