@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Workflow avviato</title>
+  </head>
+  <body>
+    <h2>✅ Workflow avviato con successo!</h2>
+    <p>ID: {{ workflow_id }}</p>
+
+    {% if ui_host %}
+      <p>
+        <a href="{{ ui_host }}/execution/{{ workflow_id }}" target="_blank">
+          Apri esecuzione su Conductor
+        </a
+      </p>
+    {% else %}
+      <p>Non è stato configurato <code>ui_host</code> in Conductor Configuration.</p>
+    {% endif %}
+  </body>
+</html>
