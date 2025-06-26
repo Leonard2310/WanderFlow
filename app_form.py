@@ -1,10 +1,8 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 from conductor.client.configuration.configuration import Configuration, AuthenticationSettings
 from conductor.client.workflow.executor.workflow_executor import WorkflowExecutor
 from conductor.client.orkes.orkes_task_client import OrkesTaskClient
 from dotenv import load_dotenv
-import threading
-import time
 import os
 
 app = Flask(__name__)
@@ -26,23 +24,34 @@ executor = WorkflowExecutor(configuration=config)
 
 @app.route("/")
 def index():
-    # Mostra pagina per avviare workflow
     return render_template("index.html")
 
-@app.route("/start_workflow", methods=["POST"])
+@app.route("/start_workflow", methods=["GET", "POST"])
 def start_workflow():
-    # Avvia workflow senza input (o con input minimo)
+    if request.method == "GET":
+        return "❌ Questo endpoint supporta solo richieste POST.", 405
+
     run = executor.execute(
         name="checkout_workflow",
         version=1,
-        workflow_input={}  # oppure puoi mettere input minimo
+        workflow_input={}
     )
-    # Reindirizza a pagina che indica l'ID del workflow
-    return render_template("workflow_started.html", workflow_id=run.workflow_id, ui_host=config.ui_host)
+    return redirect(url_for("workflow_started", workflow_id=run.workflow_id))
+
+@app.route("/workflow_started/<workflow_id>")
+def workflow_started(workflow_id):
+    return render_template("workflow_started.html", workflow_id=workflow_id, ui_host=config.ui_host)
+
+@app.route("/check_workflow_status/<workflow_id>")
+def check_workflow_status(workflow_id):
+    try:
+        wf = executor.get_workflow(workflow_id=workflow_id, include_tasks=False)
+        return jsonify({"status": wf.status})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/form/<task_id>")
 def form(task_id):
-    # Mostra form per completare il task WaitUserRequest
     return render_template("form.html", task_id=task_id)
 
 @app.route("/complete_task", methods=["POST"])
@@ -51,7 +60,6 @@ def complete_task():
     durata = request.form.get("durata", type=int)
     prefs = request.form.getlist("preferences")
 
-    # Completa il task WAIT_FOR_WEBHOOK con output dati utente
     task_client.update_task({
         "taskId": task_id,
         "status": "COMPLETED",
@@ -64,17 +72,12 @@ def complete_task():
 
 @app.route("/wait_task")
 def wait_task():
-    # Prova a fare polling per un task WaitUserRequest (timeout 10s)
-    worker_id = "web_form_worker"  # ID del worker, personalizzabile
-
+    worker_id = "web_form_worker"
     task = task_client.poll(task_type="WaitUserRequest", worker_id=worker_id, timeout=10000)
     if task and task.get("taskId"):
-        task_id = task["taskId"]
-        # Redirect a form con task_id
-        return redirect(url_for("form", task_id=task_id))
+        return redirect(url_for("form", task_id=task["taskId"]))
     else:
         return "<p>Nessun task disponibile al momento. Ricarica questa pagina fra qualche secondo.</p>"
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

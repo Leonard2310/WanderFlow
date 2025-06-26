@@ -1,9 +1,13 @@
 <!doctype html>
 <html lang="it">
-  <head><meta charset="utf-8" /><title>Workflow avviato</title></head>
+  <head>
+    <meta charset="utf-8" />
+    <title>Workflow avviato</title>
+  </head>
   <body>
     <h2>✅ Workflow avviato con successo!</h2>
     <p>ID: {{ workflow_id }}</p>
+
     {% if ui_host %}
     <p>
       <a href="{{ ui_host }}/execution/{{ workflow_id }}" target="_blank">
@@ -11,7 +15,20 @@
       </a>
     </p>
     {% endif %}
-    <meta http-equiv="refresh" content="5">  <!-- Ricarica la pagina ogni 5 secondi -->
-    <p>Attendo un task da Orkes... La pagina si aggiorna automaticamente.</p>
+
+    <p>Attendo un task da Orkes... Controllo ogni 5 secondi.</p>
+
+    <script>
+      setInterval(() => {
+        fetch("/check_workflow_status/{{ workflow_id }}")
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === "COMPLETED") {
+              window.location.href = "/wait_task";
+            }
+          })
+          .catch(err => console.error("Errore nel polling:", err));
+      }, 5000);
+    </script>
   </body>
 </html>
