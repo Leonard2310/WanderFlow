@@ -13,9 +13,9 @@
       </p>
     {% endif %}
 
-    <!-- Questo link chiama /wait_task, che fa polling e reindirizza al vero form -->
+    <!-- Ora il link include il workflow_id -->
     <p>
-      <a href="{{ url_for('wait_task') }}">
+      <a href="{{ url_for('wait_task', workflow_id=workflow_id) }}">
         Compila form per completare il task
       </a>
     </p>

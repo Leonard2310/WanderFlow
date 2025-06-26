@@ -18,7 +18,6 @@ def create_config():
         authentication_settings=auth
     )
 
-# Configurazione e client
 config      = create_config()
 executor    = WorkflowExecutor(configuration=config)
 task_client = OrkesTaskClient(configuration=config)
@@ -31,7 +30,7 @@ def index():
 @app.route("/start_workflow", methods=["POST"])
 def start_workflow():
     run = executor.execute(
-        name="TripMatch_BPA",   # deve corrispondere al nome del workflow in Orkes
+        name="TripMatch_BPA",
         version=2,
         workflow_input={}
     )
@@ -45,20 +44,26 @@ def workflow_started(workflow_id):
         ui_host=UI_HOST
     )
 
+# Nuova route per cercare il task pendente e reindirizzare al form
+@app.route("/wait_task/<workflow_id>")
+def wait_task(workflow_id):
+    wf = executor.get_workflow(workflow_id=workflow_id, include_tasks=True)
+    # Cerca il task WaitUserRequest in IN_PROGRESS
+    for t in wf.tasks:
+        if t.task_reference_name == "WaitUserRequest" and t.status == "IN_PROGRESS":
+            return redirect(url_for("form", task_id=t.task_id))
+    return "<p>Nessun task disponibile al momento. Ricarica questa pagina fra qualche secondo.</p>"
+
 @app.route("/form/<task_id>")
 def form(task_id):
     return render_template("form.html", task_id=task_id)
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    """
-    Riceve i dati dal form e completa il task WAIT_FOR_WEBHOOK
-    """
     task_id = request.form.get("taskId")
     if not task_id:
         return "❌ taskId mancante", 400
 
-    # Parsing e validazione dei campi
     try:
         durata = int(request.form.get("durata", 0))
     except ValueError:
@@ -66,7 +71,6 @@ def webhook():
 
     prefs = request.form.getlist("preferences")
 
-    # Completa il task in Conductor
     task_client.update_task({
         "taskId": task_id,
         "status": "COMPLETED",
