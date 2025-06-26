@@ -1,23 +1,15 @@
 <!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <title>Preferenze viaggio</title>
-  </head>
+  <head><meta charset="utf-8"/><title>Preferenze viaggio</title></head>
   <body>
     <h1>Inserisci i dati del viaggio</h1>
-
-    <form method="post" action="{{ url_for('complete_task') }}">
+    <form method="post" action="{{ url_for('webhook') }}">
       <input type="hidden" name="taskId" value="{{ task_id }}">
-
-      Durata (giorni):
-      <input type="number" name="durata" min="1" required /><br /><br />
-
-      Preferenze:<br />
-      <input type="checkbox" name="preferences" value="natura" /> Natura<br />
-      <input type="checkbox" name="preferences" value="città" /> Città<br />
-      <input type="checkbox" name="preferences" value="mare" /> Mare<br /><br />
-
+      Durata (giorni): <input type="number" name="durata" min="1" required><br><br>
+      Preferenze:<br>
+      <input type="checkbox" name="preferences" value="natura"> Natura<br>
+      <input type="checkbox" name="preferences" value="città"> Città<br>
+      <input type="checkbox" name="preferences" value="mare"> Mare<br><br>
       <button type="submit">Invia preferenze</button>
     </form>
   </body>

@@ -1,34 +1,23 @@
 <!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <title>Workflow avviato</title>
-  </head>
+  <head><meta charset="utf-8"/><title>Workflow avviato</title></head>
   <body>
-    <h2>✅ Workflow avviato con successo!</h2>
+    <h2>✅ Workflow avviato!</h2>
     <p>ID: {{ workflow_id }}</p>
 
     {% if ui_host %}
-    <p>
-      <a href="{{ ui_host }}/execution/{{ workflow_id }}" target="_blank">
-        Apri esecuzione su Conductor
-      </a>
-    </p>
+      <p>
+        <a href="{{ ui_host }}/execution/{{ workflow_id }}" target="_blank">
+          Apri in Conductor UI
+        </a>
+      </p>
     {% endif %}
 
-    <p>Attendo un task da Orkes... Controllo ogni 5 secondi.</p>
-
-    <script>
-      setInterval(() => {
-        fetch("/check_workflow_status/{{ workflow_id }}")
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === "COMPLETED") {
-              window.location.href = "/wait_task";
-            }
-          })
-          .catch(err => console.error("Errore nel polling:", err));
-      }, 5000);
-    </script>
+    <!-- Questo link chiama /wait_task, che fa polling e reindirizza al vero form -->
+    <p>
+      <a href="{{ url_for('wait_task') }}">
+        Compila form per completare il task
+      </a>
+    </p>
   </body>
 </html>

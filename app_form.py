@@ -18,48 +18,55 @@ def create_config():
         authentication_settings=auth
     )
 
-config = create_config()
+# Configurazione e client
+config      = create_config()
+executor    = WorkflowExecutor(configuration=config)
 task_client = OrkesTaskClient(configuration=config)
-executor = WorkflowExecutor(configuration=config)
+UI_HOST     = os.getenv("CONDUCTOR_UI_HOST", "").rstrip("/")
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/start_workflow", methods=["GET", "POST"])
+@app.route("/start_workflow", methods=["POST"])
 def start_workflow():
-    if request.method == "GET":
-        return "❌ Questo endpoint supporta solo richieste POST.", 405
-
     run = executor.execute(
-        name="checkout_workflow",
-        version=1,
+        name="TripMatch_BPA",   # deve corrispondere al nome del workflow in Orkes
+        version=2,
         workflow_input={}
     )
     return redirect(url_for("workflow_started", workflow_id=run.workflow_id))
 
 @app.route("/workflow_started/<workflow_id>")
 def workflow_started(workflow_id):
-    return render_template("workflow_started.html", workflow_id=workflow_id, ui_host=config.ui_host)
-
-@app.route("/check_workflow_status/<workflow_id>")
-def check_workflow_status(workflow_id):
-    try:
-        wf = executor.get_workflow(workflow_id=workflow_id, include_tasks=False)
-        return jsonify({"status": wf.status})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return render_template(
+        "workflow_started.html",
+        workflow_id=workflow_id,
+        ui_host=UI_HOST
+    )
 
 @app.route("/form/<task_id>")
 def form(task_id):
     return render_template("form.html", task_id=task_id)
 
-@app.route("/complete_task", methods=["POST"])
-def complete_task():
-    task_id = request.form["taskId"]
-    durata = request.form.get("durata", type=int)
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    """
+    Riceve i dati dal form e completa il task WAIT_FOR_WEBHOOK
+    """
+    task_id = request.form.get("taskId")
+    if not task_id:
+        return "❌ taskId mancante", 400
+
+    # Parsing e validazione dei campi
+    try:
+        durata = int(request.form.get("durata", 0))
+    except ValueError:
+        return "❌ durata non valida", 400
+
     prefs = request.form.getlist("preferences")
 
+    # Completa il task in Conductor
     task_client.update_task({
         "taskId": task_id,
         "status": "COMPLETED",
@@ -68,16 +75,12 @@ def complete_task():
             "preferences": prefs
         }
     })
-    return "✅ Preferenze inviate a Conductor!"
+    return render_template("webhook_ack.html")
 
-@app.route("/wait_task")
-def wait_task():
-    worker_id = "web_form_worker"
-    task = task_client.poll(task_type="WaitUserRequest", worker_id=worker_id, timeout=10000)
-    if task and task.get("taskId"):
-        return redirect(url_for("form", task_id=task["taskId"]))
-    else:
-        return "<p>Nessun task disponibile al momento. Ricarica questa pagina fra qualche secondo.</p>"
+@app.route("/check_workflow_status/<workflow_id>")
+def check_workflow_status(workflow_id):
+    wf = executor.get_workflow(workflow_id=workflow_id, include_tasks=False)
+    return jsonify({"status": wf.status})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
