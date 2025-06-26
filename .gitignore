@@ -1,3 +1,4 @@
 *.env
 BPA_TripMatch/
 .DS_Store
+__pycache__/
