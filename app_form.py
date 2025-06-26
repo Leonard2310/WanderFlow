@@ -44,14 +44,23 @@ def workflow_started(workflow_id):
         ui_host=UI_HOST
     )
 
-# Nuova route per cercare il task pendente e reindirizzare al form
 @app.route("/wait_task/<workflow_id>")
 def wait_task(workflow_id):
     wf = executor.get_workflow(workflow_id=workflow_id, include_tasks=True)
-    # Cerca il task WaitUserRequest in IN_PROGRESS
     for t in wf.tasks:
-        if t.task_reference_name == "WaitUserRequest" and t.status == "IN_PROGRESS":
-            return redirect(url_for("form", task_id=t.task_id))
+        # Estrai referenceName, status e taskId indipendentemente dal tipo di oggetto
+        if isinstance(t, dict):
+            ref_name = t.get("taskReferenceName") or t.get("task_reference_name")
+            status   = t.get("status")
+            tid      = t.get("taskId") or t.get("task_id")
+        else:
+            ref_name = getattr(t, "task_reference_name", None) or getattr(t, "taskReferenceName", None)
+            status   = getattr(t, "status", None)
+            tid      = getattr(t, "task_id", None) or getattr(t, "taskId", None)
+
+        if ref_name == "WaitUserRequest" and status == "IN_PROGRESS" and tid:
+            return redirect(url_for("form", task_id=tid))
+
     return "<p>Nessun task disponibile al momento. Ricarica questa pagina fra qualche secondo.</p>"
 
 @app.route("/form/<task_id>")
