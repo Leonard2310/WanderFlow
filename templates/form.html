@@ -5,6 +5,7 @@
     <h1>Inserisci i dati del viaggio</h1>
     <form method="post" action="{{ url_for('webhook') }}">
       <input type="hidden" name="taskId" value="{{ task_id }}">
+      <input type="hidden" name="workflowId" value="{{ workflow_id }}">
       Durata (giorni): <input type="number" name="durata" min="1" required><br><br>
       Preferenze:<br>
       <input type="checkbox" name="preferences" value="natura"> Natura<br>
