@@ -1,17 +1,120 @@
 <!doctype html>
 <html lang="it">
-  <head><meta charset="utf-8"/><title>Preferenze viaggio</title></head>
-  <body>
-    <h1>Inserisci i dati del viaggio</h1>
-    <form method="post" action="{{ url_for('webhook') }}">
-      <input type="hidden" name="taskId" value="{{ task_id }}">
-      <input type="hidden" name="workflowId" value="{{ workflow_id }}">
-      Durata (giorni): <input type="number" name="durata" min="1" required><br><br>
-      Preferenze:<br>
-      <input type="checkbox" name="preferences" value="natura"> Natura<br>
-      <input type="checkbox" name="preferences" value="città"> Città<br>
-      <input type="checkbox" name="preferences" value="mare"> Mare<br><br>
-      <button type="submit">Invia preferenze</button>
-    </form>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>Preferenze viaggio</title>
+  <style>
+    body{
+      font-family:Arial, sans-serif;
+      max-width:600px; margin:auto;
+      padding:20px; background:#f4f4f4;
+    }
+    h1{ text-align:center; color:#333; }
+    form{ background:#fff; padding:20px; border-radius:8px; }
+    label{ display:block; margin-top:10px; font-weight:bold; }
+    input,select{
+      width:100%; padding:8px;
+      margin-top:5px; margin-bottom:15px;
+      border:1px solid #ccc; border-radius:4px;
+    }
+    .checkbox-group{ display:flex; flex-wrap:wrap; }
+    .checkbox-group label{
+      flex:1 1 45%; margin-right:10px;
+    }
+    button{
+      background:#007BFF; color:#fff;
+      padding:10px 20px; border:none;
+      border-radius:4px; cursor:pointer; font-size:16px;
+    }
+    button:hover{ background:#0056b3; }
+  </style>
+</head>
+<body>
+  <h1>Inserisci i dati del viaggio</h1>
+
+  <form method="post" action="{{ url_for('webhook') }}">
+    <!-- hidden -->
+    <input type="hidden" name="taskId"     value="{{ task_id }}">
+    <input type="hidden" name="workflowId" value="{{ workflow_id }}">
+
+    <!-- durata -->
+    <label for="durata">Durata (giorni):</label>
+    <input type="number" name="durata" id="durata" min="1" required>
+
+    <!-- periodo -->
+    <label for="periodo">Periodo:</label>
+    <input type="date" name="preferences" id="periodo">
+
+    <!-- tipologia meta -->
+    <label>Tipologia di meta:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="preferences" value="natura"> Natura</label>
+      <label><input type="checkbox" name="preferences" value="città"> Città</label>
+      <label><input type="checkbox" name="preferences" value="mare"> Mare</label>
+      <label><input type="checkbox" name="preferences" value="montagna"> Montagna</label>
+    </div>
+
+    <!-- nazione -->
+    <label for="nazione">Nazione preferita:</label>
+    <select name="preferences" id="nazione">
+      <option value="">-- Seleziona una nazione --</option>
+
+      <optgroup label="Europa">
+        <option>Italia</option><option>Francia</option><option>Spagna</option>
+        <option>Germania</option><option>Grecia</option><option>Portogallo</option>
+        <option>Regno Unito</option><option>Malta</option><option>Paesi Bassi</option>
+        <option>Svizzera</option><option>Austria</option><option>Norvegia</option>
+        <option>Svezia</option><option>Finlandia</option><option>Irlanda</option>
+        <option>Polonia</option><option>Croazia</option><option>Repubblica Ceca</option>
+        <option>Ungheria</option>
+      </optgroup>
+
+      <optgroup label="Asia">
+        <option>Giappone</option><option>Cina</option><option>Thailandia</option>
+        <option>India</option><option>Indonesia</option><option>Vietnam</option>
+        <option>Corea del Sud</option><option>Filippine</option><option>Singapore</option>
+        <option>Maldive</option><option>Nepal</option><option>Sri Lanka</option>
+      </optgroup>
+
+      <optgroup label="Africa">
+        <option>Egitto</option><option>Marocco</option><option>Sudafrica</option>
+        <option>Kenya</option><option>Tanzania</option><option>Mauritius</option>
+        <option>Madagascar</option><option>Tunisia</option><option>Namibia</option>
+      </optgroup>
+
+      <optgroup label="America del Nord">
+        <option>Stati Uniti</option><option>Canada</option><option>Messico</option>
+        <option>Cuba</option><option>Repubblica Dominicana</option>
+      </optgroup>
+
+      <optgroup label="America Centrale &amp; Sud">
+        <option>Colombia</option><option>Perù</option><option>Cile</option>
+        <option>Argentina</option><option>Brasile</option><option>Uruguay</option>
+        <option>Ecuador</option><option>Costa Rica</option><option>Panama</option>
+      </optgroup>
+
+      <optgroup label="Oceania">
+        <option>Australia</option><option>Nuova Zelanda</option>
+        <option>Figi</option><option>Samoa</option><option>Polinesia Francese</option>
+      </optgroup>
+
+      <optgroup label="Medio Oriente">
+        <option>Emirati Arabi Uniti</option><option>Israele</option>
+        <option>Giordania</option><option>Turchia</option><option>Qatar</option>
+      </optgroup>
+    </select>
+
+    <!-- tipo vacanza -->
+    <label>Tipo di vacanza:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="preferences" value="relax"> Relax</label>
+      <label><input type="checkbox" name="preferences" value="villeggiatura"> Villeggiatura</label>
+      <label><input type="checkbox" name="preferences" value="avventura"> Avventura</label>
+      <label><input type="checkbox" name="preferences" value="cultura"> Cultura</label>
+      <label><input type="checkbox" name="preferences" value="gastronomia"> Gastronomia</label>
+    </div>
+
+    <button type="submit">Invia preferenze</button>
+  </form>
+</body>
 </html>
