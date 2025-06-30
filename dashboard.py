@@ -4,6 +4,7 @@ import streamlit as st
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+import json
 
 from dotenv import load_dotenv
 
@@ -33,8 +34,8 @@ executor, task_client = create_clients()
 defaults = {
     "workflow_id": None,
     "pref_task_id": None,
+    "show_task_id": None,
     "choice_task_id": None,
-    "city_task_id": None,
     "itinerary": None,
     "extra_requested": False,
     "extra_info": None,
@@ -86,6 +87,15 @@ def cache_task(ref_name, state_key):
         if t:
             st.session_state[state_key] = t.task_id
 
+def wait_for_itinerary_task(wf_id):
+    with st.spinner("Elaboro itinerario…"):
+        while True:
+            t = fetch_task_by_ref(wf_id, "ShowItinerary")
+            if t:
+                # nelle versioni più recenti è t.input_data, in quelle vecchie t.inputData
+                return t.input_data["itinerary"]
+            time.sleep(2)
+
 def build_itinerary_pdf(itinerary_text: str) -> BytesIO:
     """
     Crea un PDF in memoria con ReportLab e restituisce il buffer BytesIO.
@@ -116,7 +126,7 @@ def build_itinerary_pdf(itinerary_text: str) -> BytesIO:
 st.sidebar.title("TripMatch 🧳")
 
 if st.sidebar.button("Avvia nuovo workflow"):
-    run = executor.execute(name="TripMatch_BPA", version=2, workflow_input={})
+    run = executor.execute(name="TripMatch_BPA", version=8, workflow_input={})
     for k in defaults:
         st.session_state[k] = defaults[k]                  # reset stato
     st.session_state.workflow_id = run.workflow_id
@@ -182,44 +192,111 @@ if st.session_state.pref_task_id and st.session_state.itinerary is None:
         )
         st.rerun()
 
-# 2️⃣  --- Itinerary visualizzato + scelta ---
+# 2️⃣  --- Itinerary display & choice ---
+
 if st.session_state.itinerary:
     st.subheader("🌟 Itinerario proposto")
     st.markdown(st.session_state.itinerary)
 
-    pdf_buffer = build_itinerary_pdf(st.session_state.itinerary) #stampa in PDF l'itinerario
+    pdf_buffer = build_itinerary_pdf(st.session_state.itinerary)
     st.download_button(
         label="📄 Scarica PDF",
         data=pdf_buffer,
         file_name="itinerario.pdf",
-        mime="application/pdf"
+        mime="application/pdf",
     )
 
-    scelta = st.radio("Ti piace questo itinerario?", ["Accetta", "Rigenera"], horizontal=True)
-    if st.button("Conferma scelta"):
-        # Chiudiamo (o apriamo) il task GetUserChoice
-        cache_task("GetUserChoice", "choice_task_id")
-        if st.session_state.choice_task_id:
-            complete_task(st.session_state.choice_task_id, "COMPLETED",
-                          {"user_choice": scelta.lower()})
-            st.success("Scelta registrata!")
+    cache_task("ShowItinerary", "show_task_id")
 
-# 3️⃣  --- Bottone info extra (solo se c'è GetUserChoice) ---
+    # Il planner a volte restituisce JSON con più itinerari.
+    try:
+        itineraries = json.loads(st.session_state.itinerary)
+    except json.JSONDecodeError:
+        itineraries = None
+
+    if isinstance(itineraries, list) and len(itineraries) > 1:
+        st.subheader("🌟 Scegli il tuo itinerario preferito")
+        selected = st.radio(
+            "Seleziona un itinerario:",
+            [f"Itinerario {i + 1}" for i in range(len(itineraries))],
+            index=0,
+        )
+        selected_idx = int(selected.split(" ")[1]) - 1
+        selected_itinerary = itineraries[selected_idx]
+
+        st.markdown("### ✨ Itinerario selezionato")
+        st.markdown(selected_itinerary)
+
+        pdf_buffer = build_itinerary_pdf(selected_itinerary)
+        st.download_button(
+            label="📄 Scarica PDF",
+            data=pdf_buffer,
+            file_name=f"itinerario_{selected_idx + 1}.pdf",
+            mime="application/pdf",
+        )
+
+        if st.button("Conferma scelta"):
+            complete_task(
+                st.session_state.show_task_id,
+                "COMPLETED",
+                {
+                    "selected_itinerary_index": selected_idx,
+                    "selected_itinerary": selected_itinerary,
+                },
+            )
+            st.success("Itinerario confermato ✅")
+            st.session_state.itinerary = selected_itinerary  # keep for later
+            st.rerun()
+    else:
+        itinerary_text = (
+            itineraries if isinstance(itineraries, str) else itineraries[0] if itineraries else st.session_state.itinerary
+        )
+        st.markdown("### ✨ Itinerario proposto")
+        st.markdown(itinerary_text)
+
+        pdf_buffer = build_itinerary_pdf(itinerary_text)
+        st.download_button(
+            label="📄 Scarica PDF",
+            data=pdf_buffer,
+            file_name="itinerario.pdf",
+            mime="application/pdf",
+        )
+
+        if st.button("Accetta itinerario"):
+            complete_task(
+                st.session_state.show_task_id,
+                "COMPLETED",
+                {
+                    "selected_itinerary_index": 0,
+                    "selected_itinerary": itinerary_text,
+                },
+            )
+            st.success("Itinerario confermato ✅")
+            st.session_state.itinerary = itinerary_text
+            st.rerun()
+
+# 3️⃣  --- Extra info button (only if GetUserChoice exists) ---
+
 cache_task("GetUserChoice", "choice_task_id")
-btn_disabled = (st.session_state.choice_task_id is None or
-                st.session_state.extra_requested)
+btn_disabled = st.session_state.choice_task_id is None or st.session_state.extra_requested
+
 if st.sidebar.button("Richiedi info aggiuntive", disabled=btn_disabled):
     correlation_id = str(uuid.uuid4())
-    complete_task(st.session_state.choice_task_id, "COMPLETED",
-                  {"extra_request_id": correlation_id})
+    complete_task(
+        st.session_state.choice_task_id,
+        "COMPLETED",
+        {"extra_request_id": correlation_id},
+    )
     st.session_state.extra_requested = True
     st.rerun()
 
-# 4️⃣  --- Attesa extra_info ---
+# 4️⃣  --- Wait for extra_info ---
+
 if st.session_state.extra_requested and not st.session_state.extra_info:
     st.session_state.extra_info = wait_for_output_key(
-        st.session_state.workflow_id, "extra_info",
-        "Recupero informazioni aggiuntive…"
+        st.session_state.workflow_id,
+        "extra_info",
+        "Recupero informazioni aggiuntive…",
     )
     st.rerun()
 
