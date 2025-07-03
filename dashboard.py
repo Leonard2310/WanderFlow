@@ -3,6 +3,7 @@ import streamlit as st
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
 import json
 
 from dotenv import load_dotenv
@@ -45,7 +46,6 @@ for k, v in defaults.items():
 
 # ---------------- HELPER ----------------------
 def fetch_task_by_ref(wf_id: str, ref_name: str):
-    """Restituisce il primo task con reference `ref_name` in stato SCHEDULED/IN_PROGRESS."""
     wf = executor.get_workflow(workflow_id=wf_id, include_tasks=True)
     for t in wf.tasks:
         if t.reference_task_name == ref_name and t.status in ("SCHEDULED", "IN_PROGRESS"):
@@ -86,6 +86,23 @@ def wait_for_itinerary_task(wf_id):
                 return t.input_data["itinerary"]
             time.sleep(2)
 
+def wrap_text(text, max_width, font_name="Helvetica", font_size=11):
+    words = text.split()
+    lines = []
+    current_line = ""
+    for word in words:
+        test_line = current_line + (" " if current_line else "") + word
+        width = pdfmetrics.stringWidth(test_line, font_name, font_size)
+        if width <= max_width:
+            current_line = test_line
+        else:
+            if current_line:
+                lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+    return lines
+
 def build_itinerary_pdf(itinerary_text: str) -> BytesIO:
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
@@ -94,12 +111,20 @@ def build_itinerary_pdf(itinerary_text: str) -> BytesIO:
     c.drawString(40, height - 60, "Travel Itinerary")
     c.setFont("Helvetica", 11)
     y = height - 100
-    for line in itinerary_text.split("\n"):
-        c.drawString(40, y, line)
-        y -= 15
-        if y < 40:
-            c.showPage()
-            y = height - 60
+    max_width = width - 80  # margins 40 + 40
+    font_name = "Helvetica"
+    font_size = 11
+
+    for paragraph in itinerary_text.split("\n"):
+        wrapped_lines = wrap_text(paragraph, max_width, font_name, font_size)
+        for line in wrapped_lines:
+            c.drawString(40, y, line)
+            y -= 15
+            if y < 40:
+                c.showPage()
+                c.setFont(font_name, font_size)
+                y = height - 60
+
     c.save()
     buffer.seek(0)
     return buffer
@@ -135,19 +160,19 @@ if st.session_state.pref_task_id and st.session_state.itinerary is None:
 
         st.markdown("### Preferred country:")
         countries = {
-            "Europa": ["Italia","Francia","Spagna","Germania","Grecia","Portogallo",
-                       "Regno Unito","Malta","Paesi Bassi","Svizzera","Austria","Norvegia",
-                       "Svezia","Finlandia","Irlanda","Polonia","Croazia",
-                       "Repubblica Ceca","Ungheria"],
-            "Asia": ["Giappone","Cina","Thailandia","India","Indonesia","Vietnam",
-                     "Corea del Sud","Filippine","Singapore","Maldive","Nepal","Sri Lanka"],
-            "Africa": ["Egitto","Marocco","Sudafrica","Kenya","Tanzania",
-                       "Mauritius","Madagascar","Tunisia","Namibia"],
-            "America del Nord": ["Stati Uniti","Canada","Messico","Cuba","Repubblica Dominicana"],
-            "America Centrale & Sud": ["Colombia","Perù","Cile","Argentina","Brasile","Uruguay",
-                                       "Ecuador","Costa Rica","Panama"],
-            "Oceania": ["Australia","Nuova Zelanda","Figi","Samoa","Polinesia Francese"],
-            "Medio Oriente": ["Emirati Arabi Uniti","Israele","Giordania","Turchia","Qatar"]
+            "Europe": ["Italy","France","Spain","Germany","Greece","Portugal",
+                    "United Kingdom","Malta","Netherlands","Switzerland","Austria","Norway",
+                    "Sweden","Finland","Ireland","Poland","Croatia",
+                    "Czech Republic","Hungary"],
+            "Asia": ["Japan","China","Thailand","India","Indonesia","Vietnam",
+                    "South Korea","Philippines","Singapore","Maldives","Nepal","Sri Lanka"],
+            "Africa": ["Egypt","Morocco","South Africa","Kenya","Tanzania",
+                    "Mauritius","Madagascar","Tunisia","Namibia"],
+            "North America": ["United States","Canada","Mexico","Cuba","Dominican Republic"],
+            "Central & South America": ["Colombia","Peru","Chile","Argentina","Brazil","Uruguay",
+                                        "Ecuador","Costa Rica","Panama"],
+            "Oceania": ["Australia","New Zealand","Fiji","Samoa","French Polynesia"],
+            "Middle East": ["United Arab Emirates","Israel","Jordan","Turkey","Qatar"]
         }
         sel = st.selectbox(
             "Select a country",
@@ -177,7 +202,6 @@ if st.session_state.pref_task_id and st.session_state.itinerary is None:
 
 if st.session_state.itinerary:
     st.subheader("🌟 Proposed itinerary")
-    st.markdown(st.session_state.itinerary)
 
     pdf_buffer = build_itinerary_pdf(st.session_state.itinerary)
     st.download_button(
@@ -255,7 +279,7 @@ if st.session_state.itinerary:
             st.session_state.itinerary = itinerary_text
             st.rerun()
 
-# 3️⃣  --- Extra info button (only if GetUserChoice exists) ---
+# 3️⃣  --- Extra info button ---
 
 cache_task("GetUserChoice", "choice_task_id")
 btn_disabled = st.session_state.choice_task_id is None or st.session_state.extra_requested
