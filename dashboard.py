@@ -1,4 +1,3 @@
-# dashboard_streamlit.py
 import os, time, uuid
 import streamlit as st
 from io import BytesIO
@@ -62,17 +61,9 @@ def wait_for_output_key(wf_id: str, key: str, msg: str):
             time.sleep(2)
 
 def complete_task(task_id: str, status="COMPLETED", output=None):
-    """
-    Chiude (o aggiorna) un task SIMPLE con asyncComplete=true.
-    Deve prima fare il poll per poterlo aggiornare.
-    """
     task = task_client.get_task(task_id)
-    task_type = task.task_type  # ✅ usa l’attributo, non la chiave
-
-    # Fai il poll per acquisire il task
+    task_type = task.task_type
     task_client.poll_task(task_type=task_type, worker_id="streamlit_ui")
-
-    # Completa il task
     task_client.update_task({
         "taskId": task_id,
         "workflowInstanceId": st.session_state.workflow_id,
@@ -88,71 +79,61 @@ def cache_task(ref_name, state_key):
             st.session_state[state_key] = t.task_id
 
 def wait_for_itinerary_task(wf_id):
-    with st.spinner("Elaboro itinerario…"):
+    with st.spinner("Generating itinerary…"):
         while True:
             t = fetch_task_by_ref(wf_id, "ShowItinerary")
             if t:
-                # nelle versioni più recenti è t.input_data, in quelle vecchie t.inputData
                 return t.input_data["itinerary"]
             time.sleep(2)
 
 def build_itinerary_pdf(itinerary_text: str) -> BytesIO:
-    """
-    Crea un PDF in memoria con ReportLab e restituisce il buffer BytesIO.
-    """
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
-
-    # Titolo
     c.setFont("Helvetica-Bold", 18)
-    c.drawString(40, height - 60, "Itinerario di viaggio")
-
-    # Corpo (split per evitare testo fuori pagina)
+    c.drawString(40, height - 60, "Travel Itinerary")
     c.setFont("Helvetica", 11)
     y = height - 100
     for line in itinerary_text.split("\n"):
         c.drawString(40, y, line)
         y -= 15
-        if y < 40:          # vai a pagina nuova se serve
+        if y < 40:
             c.showPage()
             y = height - 60
     c.save()
-
     buffer.seek(0)
     return buffer
 
 # ---------------- SIDEBAR ---------------------
 st.sidebar.title("TripMatch 🧳")
 
-if st.sidebar.button("Avvia nuovo workflow"):
+if st.sidebar.button("Start new workflow"):
     run = executor.execute(name="TripMatch_BPA", version=8, workflow_input={})
     for k in defaults:
-        st.session_state[k] = defaults[k]                  # reset stato
+        st.session_state[k] = defaults[k]
     st.session_state.workflow_id = run.workflow_id
-    st.sidebar.success(f"Workflow {run.workflow_id} avviato ✅")
+    st.sidebar.success(f"Workflow {run.workflow_id} started ✅")
     st.rerun()
 
 # ---------------- MAIN ------------------------
-st.title("TripMatch – Pianifica la tua avventura 🌍")
+st.title("TripMatch - Plan your adventure 🌍")
 
 if not st.session_state.workflow_id:
-    st.info("Premi *Avvia nuovo workflow* nel menu laterale per iniziare.")
+    st.info("Click *Start new workflow* in the sidebar to begin.")
     st.stop()
 
 # 1️⃣  --- UserPreferences ---
 cache_task("UserPreferences", "pref_task_id")
 if st.session_state.pref_task_id and st.session_state.itinerary is None:
     with st.form("pref_form"):
-        durata  = st.number_input("Durata (giorni)", min_value=1, value=7)
-        periodo = st.date_input("Periodo")
+        durata  = st.number_input("Duration (days)", min_value=1, value=7)
+        periodo = st.date_input("Period")
 
-        st.markdown("### Tipologia di meta:")
+        st.markdown("### Type of destination:")
         metas = [m for m in ["natura","città","mare","montagna"]
                  if st.checkbox(m.capitalize(), key=f"meta_{m}")]
 
-        st.markdown("### Nazione preferita:")
-        # (lista paesi abbreviata per brevità ⇣)
+        st.markdown("### Preferred country:")
         countries = {
             "Europa": ["Italia","Francia","Spagna","Germania","Grecia","Portogallo",
                        "Regno Unito","Malta","Paesi Bassi","Svizzera","Austria","Norvegia",
@@ -169,73 +150,72 @@ if st.session_state.pref_task_id and st.session_state.itinerary is None:
             "Medio Oriente": ["Emirati Arabi Uniti","Israele","Giordania","Turchia","Qatar"]
         }
         sel = st.selectbox(
-            "Seleziona una nazione",
+            "Select a country",
             [""] + [f"{reg} – {c}" for reg, cl in countries.items() for c in cl]
         )
         nazione = sel.split(" – ")[-1] if " – " in sel else None
 
-        st.markdown("### Tipo di vacanza:")
+        st.markdown("### Vacation style:")
         tipi = [t for t in ["relax","villeggiatura","avventura","cultura","gastronomia"]
                 if st.checkbox(t.capitalize(), key=f"tipo_{t}")]
 
-        inviato = st.form_submit_button("Invia preferenze")
+        inviato = st.form_submit_button("Submit preferences")
 
     if inviato:
         prefs = [periodo.isoformat()] + metas + ([nazione] if nazione else []) + tipi
         complete_task(st.session_state.pref_task_id, "COMPLETED",
                       {"durata": durata, "preferences": prefs})
-        st.success("Preferenze inviate ✅")
+        st.success("Preferences submitted ✅")
 
         st.session_state.itinerary = wait_for_output_key(
             st.session_state.workflow_id, "itinerary",
-            "Elaboro itinerario…"
+            "Generating itinerary…"
         )
         st.rerun()
 
 # 2️⃣  --- Itinerary display & choice ---
 
 if st.session_state.itinerary:
-    st.subheader("🌟 Itinerario proposto")
+    st.subheader("🌟 Proposed itinerary")
     st.markdown(st.session_state.itinerary)
 
     pdf_buffer = build_itinerary_pdf(st.session_state.itinerary)
     st.download_button(
-        label="📄 Scarica PDF",
+        label="📄 Download PDF",
         data=pdf_buffer,
-        file_name="itinerario.pdf",
+        file_name="itinerary.pdf",
         mime="application/pdf",
     )
 
     cache_task("ShowItinerary", "show_task_id")
 
-    # Il planner a volte restituisce JSON con più itinerari.
     try:
         itineraries = json.loads(st.session_state.itinerary)
     except json.JSONDecodeError:
         itineraries = None
 
     if isinstance(itineraries, list) and len(itineraries) > 1:
-        st.subheader("🌟 Scegli il tuo itinerario preferito")
+        st.subheader("🌟 Choose your preferred itinerary")
         selected = st.radio(
-            "Seleziona un itinerario:",
-            [f"Itinerario {i + 1}" for i in range(len(itineraries))],
+            "Select an itinerary:",
+            [f"Itinerary {i + 1}" for i in range(len(itineraries))],
             index=0,
         )
         selected_idx = int(selected.split(" ")[1]) - 1
         selected_itinerary = itineraries[selected_idx]
 
-        st.markdown("### ✨ Itinerario selezionato")
+        st.markdown("### ✨ Selected itinerary")
         st.markdown(selected_itinerary)
 
         pdf_buffer = build_itinerary_pdf(selected_itinerary)
         st.download_button(
-            label="📄 Scarica PDF",
+            label="📄 Download PDF",
             data=pdf_buffer,
-            file_name=f"itinerario_{selected_idx + 1}.pdf",
+            file_name=f"itinerary_{selected_idx + 1}.pdf",
             mime="application/pdf",
         )
 
-        if st.button("Conferma scelta"):
+        if st.button("Confirm selection"):
             complete_task(
                 st.session_state.show_task_id,
                 "COMPLETED",
@@ -244,25 +224,25 @@ if st.session_state.itinerary:
                     "selected_itinerary": selected_itinerary,
                 },
             )
-            st.success("Itinerario confermato ✅")
-            st.session_state.itinerary = selected_itinerary  # keep for later
+            st.success("Itinerary confirmed ✅")
+            st.session_state.itinerary = selected_itinerary
             st.rerun()
     else:
         itinerary_text = (
             itineraries if isinstance(itineraries, str) else itineraries[0] if itineraries else st.session_state.itinerary
         )
-        st.markdown("### ✨ Itinerario proposto")
+        st.markdown("### ✨ Proposed itinerary")
         st.markdown(itinerary_text)
 
         pdf_buffer = build_itinerary_pdf(itinerary_text)
         st.download_button(
-            label="📄 Scarica PDF",
+            label="📄 Download PDF",
             data=pdf_buffer,
-            file_name="itinerario.pdf",
+            file_name="itinerary.pdf",
             mime="application/pdf",
         )
 
-        if st.button("Accetta itinerario"):
+        if st.button("Accept itinerary"):
             complete_task(
                 st.session_state.show_task_id,
                 "COMPLETED",
@@ -271,7 +251,7 @@ if st.session_state.itinerary:
                     "selected_itinerary": itinerary_text,
                 },
             )
-            st.success("Itinerario confermato ✅")
+            st.success("Itinerary confirmed ✅")
             st.session_state.itinerary = itinerary_text
             st.rerun()
 
@@ -280,7 +260,7 @@ if st.session_state.itinerary:
 cache_task("GetUserChoice", "choice_task_id")
 btn_disabled = st.session_state.choice_task_id is None or st.session_state.extra_requested
 
-if st.sidebar.button("Richiedi info aggiuntive", disabled=btn_disabled):
+if st.sidebar.button("Request extra info", disabled=btn_disabled):
     correlation_id = str(uuid.uuid4())
     complete_task(
         st.session_state.choice_task_id,
@@ -296,10 +276,10 @@ if st.session_state.extra_requested and not st.session_state.extra_info:
     st.session_state.extra_info = wait_for_output_key(
         st.session_state.workflow_id,
         "extra_info",
-        "Recupero informazioni aggiuntive…",
+        "Retrieving additional information…",
     )
     st.rerun()
 
 if st.session_state.extra_info:
-    st.subheader("ℹ️ Informazioni aggiuntive")
+    st.subheader("ℹ️ Additional information")
     st.markdown(st.session_state.extra_info)
