@@ -27,7 +27,13 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 
 class PDFGenerator:
-    """Enhanced PDF Generator for travel itineraries"""
+    """
+    Enhanced PDF generator for travel itineraries with professional styling.
+    
+    This class provides comprehensive PDF generation capabilities for travel
+    itineraries, including custom styling, branding, and multiple content
+    sections. Features WanderFlow branding and professional layout design.
+    """
     
     # Color palette - WanderFlow brand colors
     COLORS = {
@@ -44,11 +50,14 @@ class PDFGenerator:
     
     def __init__(self, title: str = "WanderFlow Travel Itinerary", author: str = "WanderFlow AI Travel Planner"):
         """
-        Initialize the PDF generator with WanderFlow branding
+        Initialize the PDF generator with WanderFlow branding.
+        
+        Sets up the PDF generator with default styling, colors, and metadata
+        for creating professional travel itinerary documents.
         
         Args:
-            title: Document title
-            author: Document author
+            title (str): Document title for metadata and headers
+            author (str): Document author for metadata
         """
         self.title = title
         self.author = author
@@ -56,7 +65,18 @@ class PDFGenerator:
         self.styles = self._create_styles()
     
     def _remove_markdown_formatting(self, text: str) -> str:
-        """Remove markdown formatting from text while preserving line breaks"""
+        """
+        Remove markdown formatting from text while preserving structure.
+        
+        Cleans up markdown syntax including bold, italic, headers, links,
+        and code blocks while maintaining readability and line breaks.
+        
+        Args:
+            text (str): Text content with markdown formatting
+            
+        Returns:
+            str: Clean text without markdown syntax
+        """
         if not text:
             return text
             
@@ -89,7 +109,16 @@ class PDFGenerator:
         return text
 
     def _create_styles(self) -> Dict[str, ParagraphStyle]:
-        """Create custom paragraph styles"""
+        """
+        Create custom paragraph styles for PDF formatting.
+        
+        Defines a comprehensive set of paragraph styles including titles,
+        headers, body text, and special formatting for different content
+        sections with WanderFlow branding colors.
+        
+        Returns:
+            Dict[str, ParagraphStyle]: Dictionary of named paragraph styles
+        """
         styles = getSampleStyleSheet()
         
         custom_styles = {
@@ -207,17 +236,24 @@ class PDFGenerator:
                            duration: Optional[int] = None,
                            extra_info: Optional[str] = None) -> BytesIO:
         """
-        Create an enhanced PDF for a travel itinerary
+        Create an enhanced PDF document for a travel itinerary.
+        
+        Generates a comprehensive PDF with multiple sections including
+        header, preferences, itinerary content, additional information,
+        and footer with professional styling and WanderFlow branding.
         
         Args:
-            itinerary_text: The main itinerary content
-            user_preferences: User preferences data
-            destination: Destination country/city
-            duration: Trip duration in days
-            extra_info: Additional travel information
+            itinerary_text (str): The main itinerary content
+            user_preferences (Optional[Dict[str, Any]]): User travel preferences
+            destination (Optional[str]): Destination country or city
+            duration (Optional[int]): Trip duration in days
+            extra_info (Optional[str]): Additional travel information
             
         Returns:
-            BytesIO buffer containing the PDF
+            BytesIO: Buffer containing the generated PDF document
+            
+        Raises:
+            Exception: If PDF generation fails
         """
         buffer = BytesIO()
         
@@ -267,7 +303,19 @@ class PDFGenerator:
             raise Exception(f"Error creating PDF: {str(e)}")
     
     def _create_header(self, destination: Optional[str], duration: Optional[int]) -> List:
-        """Create the enhanced PDF header section with WanderFlow branding"""
+        """
+        Create the enhanced PDF header section with WanderFlow branding.
+        
+        Generates the document header including brand logo, title,
+        trip details, and generation timestamp with professional formatting.
+        
+        Args:
+            destination (Optional[str]): Travel destination name
+            duration (Optional[int]): Trip duration in days
+            
+        Returns:
+            List: List of ReportLab flowable elements for the header
+        """
         story = []
         
         # WanderFlow brand header
@@ -305,7 +353,18 @@ class PDFGenerator:
         return story
     
     def _create_preferences_section(self, preferences: Dict[str, Any]) -> List:
-        """Create the enhanced user preferences section"""
+        """
+        Create the enhanced user preferences section.
+        
+        Formats user travel preferences into a professional table layout
+        with proper styling and organization for easy reading.
+        
+        Args:
+            preferences (Dict[str, Any]): User travel preferences data
+            
+        Returns:
+            List: List of ReportLab flowable elements for preferences section
+        """
         story = []
         
         story.append(Paragraph("Your Travel Preferences", self.styles['section_header']))
@@ -354,7 +413,18 @@ class PDFGenerator:
         return story
     
     def _create_itinerary_section(self, itinerary_text: str) -> List:
-        """Create the enhanced main itinerary content section"""
+        """
+        Create the enhanced main itinerary content section.
+        
+        Formats the travel itinerary with intelligent parsing for days,
+        times, and activities with appropriate styling and spacing.
+        
+        Args:
+            itinerary_text (str): Clean itinerary text content
+            
+        Returns:
+            List: List of ReportLab flowable elements for itinerary section
+        """
         story = []
         
         story.append(Paragraph("Your Detailed Travel Plan", self.styles['section_header']))
@@ -392,7 +462,18 @@ class PDFGenerator:
         return story
     
     def _create_additional_info_section(self, extra_info: str) -> List:
-        """Create the enhanced additional information section"""
+        """
+        Create the enhanced additional information section.
+        
+        Formats supplementary travel information with intelligent parsing
+        for different information categories and appropriate styling.
+        
+        Args:
+            extra_info (str): Additional travel information text
+            
+        Returns:
+            List: List of ReportLab flowable elements for additional info section
+        """
         story = []
         
         story.append(Spacer(1, 25))
@@ -423,7 +504,15 @@ class PDFGenerator:
         return story
     
     def _create_footer_section(self) -> List:
-        """Create the enhanced footer section with WanderFlow branding"""
+        """
+        Create the enhanced footer section with WanderFlow branding.
+        
+        Generates the document footer including travel tips, branding
+        information, and document metadata with professional styling.
+        
+        Returns:
+            List: List of ReportLab flowable elements for footer section
+        """
         story = []
         
         story.append(Spacer(1, 30))
@@ -473,7 +562,16 @@ class PDFGenerator:
         return story
     
     def _add_page_decoration(self, canvas_obj, doc):
-        """Add enhanced decorative elements to each page with WanderFlow branding"""
+        """
+        Add enhanced decorative elements to each page with WanderFlow branding.
+        
+        Applies consistent page decorations including headers, footers,
+        page numbers, watermarks, and corner decorations across all pages.
+        
+        Args:
+            canvas_obj: ReportLab canvas object for drawing
+            doc: Document object containing page information
+        """
         # Enhanced header with gradient-like effect
         canvas_obj.setStrokeColor(self.COLORS['primary'])
         canvas_obj.setLineWidth(3)
@@ -524,14 +622,17 @@ class PDFGenerator:
     @staticmethod
     def create_simple_pdf(text: str, filename: Optional[str] = None) -> BytesIO:
         """
-        Create a simple PDF with WanderFlow branding and basic formatting
+        Create a simple PDF document with basic WanderFlow styling.
+        
+        Generates a streamlined PDF with minimal formatting but consistent
+        branding for quick document creation needs.
         
         Args:
-            text: Text content to include
-            filename: Optional filename (for metadata)
+            text (str): Text content to include in the PDF
+            filename (Optional[str]): Optional filename for document metadata
             
         Returns:
-            BytesIO buffer containing the PDF
+            BytesIO: Buffer containing the generated simple PDF
         """
         generator = PDFGenerator(title=filename or "WanderFlow Travel Document")
         return generator.create_itinerary_pdf(text)
@@ -541,19 +642,23 @@ class PDFGenerator:
                           user_data: Optional[Dict[str, Any]] = None,
                           extra_info: Optional[str] = None) -> BytesIO:
         """
-        Create an enhanced PDF with full WanderFlow branding and formatting
+        Create an enhanced PDF with comprehensive WanderFlow branding and formatting.
+        
+        Generates a full-featured PDF document with all sections including
+        preferences, detailed itinerary, additional information, and
+        professional styling throughout.
         
         Args:
-            itinerary_text: The itinerary content
-            user_data: Optional user preferences and data
-            extra_info: Optional additional travel information
+            itinerary_text (str): The main travel itinerary content
+            user_data (Optional[Dict[str, Any]]): User preferences and trip data
+            extra_info (Optional[str]): Additional travel information and tips
             
         Returns:
-            BytesIO buffer containing the enhanced WanderFlow PDF
+            BytesIO: Buffer containing the enhanced WanderFlow PDF document
         """
         generator = PDFGenerator()
         
-        # Extract data from user_data if provided
+        # Extract relevant data from user_data if provided
         preferences = user_data.get('preferences', {}) if user_data else {}
         destination = user_data.get('destination') if user_data else None
         duration = user_data.get('duration') if user_data else None

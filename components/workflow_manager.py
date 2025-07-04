@@ -1,5 +1,8 @@
 """
-Workflow management for WanderFlow application
+Workflow Management for WanderFlow Application
+
+This module handles all interactions with Orkes Conductor workflows,
+including workflow execution, task management, and state monitoring.
 """
 
 import time
@@ -13,16 +16,35 @@ from config.app_config import AppConfig
 from utils.session_state import SessionState
 
 class WorkflowManager:
-    """Manages Orkes Conductor workflow operations"""
+    """
+    Manages Orkes Conductor workflow operations for WanderFlow application.
+    
+    This class provides a high-level interface for workflow management,
+    including starting workflows, completing tasks, and monitoring progress.
+    """
     
     def __init__(self, executor: WorkflowExecutor, task_client: OrkesTaskClient):
+        """
+        Initialize the WorkflowManager with Conductor clients.
+        
+        Args:
+            executor (WorkflowExecutor): Conductor workflow executor instance
+            task_client (OrkesTaskClient): Conductor task client instance
+        """
         self.executor = executor
         self.task_client = task_client
     
     def start_workflow(self, workflow_input: Dict[str, Any] = None) -> Optional[str]:
-        """Start a new workflow and return workflow ID"""
+        """
+        Start a new workflow instance and return its ID.
+        
+        Args:
+            workflow_input (Dict[str, Any], optional): Input data for the workflow
+            
+        Returns:
+            Optional[str]: Workflow ID if successful, None if failed
+        """
         try:
-            # Usa la stessa configurazione del codice originale
             run = self.executor.execute(
                 name=AppConfig.WORKFLOW_NAME,
                 version=AppConfig.WORKFLOW_VERSION,
@@ -34,11 +56,22 @@ class WorkflowManager:
             return None
     
     def fetch_task_by_ref(self, wf_id: str, ref_name: str):
-        """Fetch a task by reference name - incluso PENDING per task asyncComplete"""
+        """
+        Fetch a task by its reference name from a workflow.
+        
+        This method looks for tasks in SCHEDULED, IN_PROGRESS, or PENDING states,
+        which includes async completion tasks.
+        
+        Args:
+            wf_id (str): Workflow ID
+            ref_name (str): Task reference name
+            
+        Returns:
+            Task object if found, None otherwise
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=True)
             for task in wf.tasks:
-                # Includi anche PENDING per gestire task asyncComplete
                 if task.reference_task_name == ref_name and task.status in ("SCHEDULED", "IN_PROGRESS", "PENDING"):
                     return task
         except Exception as e:
@@ -46,19 +79,31 @@ class WorkflowManager:
         return None
     
     def complete_task(self, task_id: str, status: str = "COMPLETED", output: Dict[str, Any] = None) -> bool:
-        """Complete a task - stessa logica del codice originale"""
-        try:
-            # Stessa implementazione del codice originale funzionante
-            task = self.task_client.get_task(task_id)
-            task_type = task.task_type  # Usa l'attributo, non la chiave
+        """
+        Complete a workflow task with the specified status and output.
+        
+        This method polls the task, updates it, and marks it as completed
+        following the same pattern as the working dashboard implementation.
+        
+        Args:
+            task_id (str): Task ID to complete
+            status (str): Task completion status (default: "COMPLETED")
+            output (Dict[str, Any], optional): Task output data
             
-            # Fai il poll per acquisire il task
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            task = self.task_client.get_task(task_id)
+            task_type = task.task_type
+            
+            # Poll to acquire the task
             self.task_client.poll_task(task_type=task_type, worker_id="streamlit_ui")
             
-            # Completa il task - USA ACCESSO DIRETTO COME DASHBOARD FUNZIONANTE
+            # Complete the task using direct access pattern
             self.task_client.update_task({
                 "taskId": task_id,
-                "workflowInstanceId": st.session_state.workflow_id,  # ✅ Come dashboard.py
+                "workflowInstanceId": st.session_state.workflow_id,
                 "workerId": "streamlit_ui",
                 "status": status,
                 "outputData": output or {}
@@ -69,10 +114,22 @@ class WorkflowManager:
             st.error(f"Error completing task: {e}")
             return False
     
-
-
     def wait_for_output_key(self, wf_id: str, key: str, msg: str) -> Optional[Any]:
-        """Wait for an output key - STESSA LOGICA IDENTICA del dashboard.py funzionante"""
+        """
+        Wait for a specific output key to appear in workflow output.
+        
+        This method continuously polls the workflow until the specified
+        output key becomes available, using the same pattern as the
+        working dashboard implementation.
+        
+        Args:
+            wf_id (str): Workflow ID to monitor
+            key (str): Output key to wait for
+            msg (str): Spinner message to display
+            
+        Returns:
+            Optional[Any]: Value of the output key when available, None if error
+        """
         with st.spinner(msg):
             while True:
                 try:
@@ -81,20 +138,38 @@ class WorkflowManager:
                         return wf.output[key]
                     time.sleep(2)
                 except Exception as e:
-                    # Log dell'errore ma continua ad aspettare (come dashboard.py)
                     print(f"Warning while waiting for output: {e}")
                     time.sleep(2)
                     continue
     
     def cache_task(self, ref_name: str, state_key: str):
-        """Cache a task ID in session state - stessa logica del codice originale"""
+        """
+        Cache a task ID in session state for later use.
+        
+        This method fetches a task by reference name and stores its ID
+        in the session state if it's different from the current cached value.
+        
+        Args:
+            ref_name (str): Task reference name to fetch
+            state_key (str): Session state key to store the task ID
+        """
         if SessionState.get("workflow_id"):
             task = self.fetch_task_by_ref(SessionState.get("workflow_id"), ref_name)
             if task and SessionState.get(state_key) != task.task_id:
                 SessionState.set(state_key, task.task_id)
     
     def wait_for_task_to_be_available(self, wf_id: str, ref_name: str, timeout: int = 30) -> Optional[str]:
-        """Wait for a task to become available and return its task_id"""
+        """
+        Wait for a task to become available and return its task ID.
+        
+        Args:
+            wf_id (str): Workflow ID to monitor
+            ref_name (str): Task reference name to wait for
+            timeout (int): Maximum wait time in seconds
+            
+        Returns:
+            Optional[str]: Task ID if found within timeout, None otherwise
+        """
         start_time = time.time()
         with st.spinner(f"Waiting for {ref_name} task..."):
             while time.time() - start_time < timeout:
@@ -110,7 +185,17 @@ class WorkflowManager:
             return None
 
     def cache_task_with_wait(self, ref_name: str, state_key: str, timeout: int = 30):
-        """Cache a task ID in session state, waiting for it to become available"""
+        """
+        Cache a task ID in session state, waiting for it to become available.
+        
+        Args:
+            ref_name (str): Task reference name to fetch
+            state_key (str): Session state key to store the task ID
+            timeout (int): Maximum wait time in seconds
+            
+        Returns:
+            bool: True if task was cached successfully, False otherwise
+        """
         if SessionState.get(state_key) is None and SessionState.get("workflow_id"):
             task_id = self.wait_for_task_to_be_available(SessionState.get("workflow_id"), ref_name, timeout)
             if task_id:
@@ -120,7 +205,15 @@ class WorkflowManager:
         return SessionState.get(state_key) is not None
     
     def get_workflow_status(self, wf_id: str) -> Optional[Dict[str, Any]]:
-        """Get workflow status"""
+        """
+        Get comprehensive workflow status information.
+        
+        Args:
+            wf_id (str): Workflow ID to query
+            
+        Returns:
+            Optional[Dict[str, Any]]: Status information dict or None if error
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=False)
             return {
@@ -135,13 +228,23 @@ class WorkflowManager:
             return None
     
     def wait_for_itinerary_task(self, wf_id: str):
-        """Wait for ShowItinerary task - stessa logica del codice originale"""
-        with st.spinner("Elaboro itinerario…"):
+        """
+        Wait for ShowItinerary task and return the itinerary data.
+        
+        This method continuously polls for the ShowItinerary task and
+        extracts the itinerary data from its input when available.
+        
+        Args:
+            wf_id (str): Workflow ID to monitor
+            
+        Returns:
+            Itinerary data if found, None if error or timeout
+        """
+        with st.spinner("Processing itinerary..."):
             while True:
                 try:
                     task = self.fetch_task_by_ref(wf_id, "ShowItinerary")
                     if task:
-                        # Gestisce sia input_data che inputData per compatibilità
                         input_data = getattr(task, 'input_data', None) or getattr(task, 'inputData', None)
                         if input_data and "itinerary" in input_data:
                             return input_data["itinerary"]
@@ -151,13 +254,20 @@ class WorkflowManager:
                     return None
     
     def wait_for_additional_info_task(self, wf_id: str) -> Optional[str]:
-        """Wait for ShowMoreInformation task - stessa logica di ShowItinerary"""
-        with st.spinner("Caricamento informazioni aggiuntive..."):
+        """
+        Wait for ShowMoreInformation task and return additional info data.
+        
+        Args:
+            wf_id (str): Workflow ID to monitor
+            
+        Returns:
+            Optional[str]: Additional information data if found, None otherwise
+        """
+        with st.spinner("Loading additional information..."):
             while True:
                 try:
                     task = self.fetch_task_by_ref(wf_id, "ShowMoreInformation")
                     if task:
-                        # Gestisce sia input_data che inputData per compatibilità
                         input_data = getattr(task, 'input_data', None) or getattr(task, 'inputData', None)
                         if input_data and "itinerary" in input_data:
                             return input_data["itinerary"]
@@ -167,13 +277,24 @@ class WorkflowManager:
                     return None
     
     def wait_for_choice_travel_city_task(self, wf_id: str) -> Optional[Dict[str, str]]:
-        """Wait for ChoiceTravelCity task - per viaggi brevi con 3 opzioni"""
-        with st.spinner("Elaboro opzioni di viaggio..."):
+        """
+        Wait for ChoiceTravelCity task and return travel options for short trips.
+        
+        This method is used for trips of 3 days or fewer that offer multiple
+        city tour options to choose from.
+        
+        Args:
+            wf_id (str): Workflow ID to monitor
+            
+        Returns:
+            Optional[Dict[str, str]]: Dictionary containing the 3 travel options
+                                    and task ID, None if error or timeout
+        """
+        with st.spinner("Processing travel options..."):
             while True:
                 try:
                     task = self.fetch_task_by_ref(wf_id, "ChoiceTravelCity")
                     if task:
-                        # Gestisce sia input_data che inputData per compatibilità
                         input_data = getattr(task, 'input_data', None) or getattr(task, 'inputData', None)
                         if input_data and all(key in input_data for key in ["itinerary1", "itinerary2", "itinerary3"]):
                             return {
@@ -188,7 +309,16 @@ class WorkflowManager:
                     return None
     
     def terminate_workflow(self, wf_id: str, reason: str = "User terminated") -> bool:
-        """Terminate a workflow"""
+        """
+        Terminate a running workflow.
+        
+        Args:
+            wf_id (str): Workflow ID to terminate
+            reason (str): Reason for termination
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
         try:
             self.executor.terminate_workflow(workflow_id=wf_id, reason=reason)
             return True
@@ -197,7 +327,15 @@ class WorkflowManager:
             return False
     
     def is_workflow_completed(self, wf_id: str) -> bool:
-        """Check if workflow is completed"""
+        """
+        Check if workflow has completed successfully.
+        
+        Args:
+            wf_id (str): Workflow ID to check
+            
+        Returns:
+            bool: True if completed, False otherwise
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=False)
             return wf.status == "COMPLETED"
@@ -206,7 +344,15 @@ class WorkflowManager:
             return False
     
     def is_workflow_failed(self, wf_id: str) -> bool:
-        """Check if workflow has failed"""
+        """
+        Check if workflow has failed or been terminated.
+        
+        Args:
+            wf_id (str): Workflow ID to check
+            
+        Returns:
+            bool: True if failed/terminated/timed out, False otherwise
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=False)
             return wf.status in ["FAILED", "TERMINATED", "TIMED_OUT"]
@@ -215,7 +361,19 @@ class WorkflowManager:
             return False
     
     def get_workflow_debug_info(self, wf_id: str) -> Dict[str, Any]:
-        """Get detailed workflow debug information"""
+        """
+        Get detailed workflow debug information for troubleshooting.
+        
+        This method provides comprehensive information about workflow state,
+        including all tasks, their statuses, and timing information.
+        
+        Args:
+            wf_id (str): Workflow ID to analyze
+            
+        Returns:
+            Dict[str, Any]: Debug information dictionary containing workflow
+                           and task details, or error information if failed
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=True)
             
@@ -243,7 +401,18 @@ class WorkflowManager:
             return {"error": str(e)}
     
     def debug_workflow_switch_logic(self, wf_id: str) -> Dict[str, Any]:
-        """Debug the workflow switch logic to understand which branch was taken"""
+        """
+        Debug the workflow switch logic to understand routing decisions.
+        
+        This method analyzes the workflow execution path, particularly
+        focusing on the duration-based switching logic for short vs long trips.
+        
+        Args:
+            wf_id (str): Workflow ID to analyze
+            
+        Returns:
+            Dict[str, Any]: Analysis of workflow routing logic and decisions
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=True)
             
@@ -291,15 +460,28 @@ class WorkflowManager:
             return {"error": str(e)}
     
     def is_workflow_stuck(self, wf_id: str) -> Dict[str, Any]:
-        """Check if workflow is stuck and why"""
+        """
+        Analyze if workflow is stuck and determine the cause.
+        
+        This method identifies common workflow blocking scenarios,
+        particularly the 4-day duration issue that isn't handled
+        by the current workflow design.
+        
+        Args:
+            wf_id (str): Workflow ID to analyze
+            
+        Returns:
+            Dict[str, Any]: Analysis results indicating if workflow is stuck,
+                           the reason, and suggested remediation
+        """
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=True)
             
-            # Check if workflow has only UserPreferences completed
+            # Check workflow task completion status
             completed_tasks = [task for task in wf.tasks if task.status == "COMPLETED"]
             scheduled_tasks = [task for task in wf.tasks if task.status == "SCHEDULED"]
             
-            # Look for LogUnhandledDuration task
+            # Look for LogUnhandledDuration task (indicates 4-day duration problem)
             unhandled_duration_task = None
             for task in wf.tasks:
                 if task.reference_task_name == "LogUnhandledDuration":
@@ -316,7 +498,7 @@ class WorkflowManager:
                 "reason": None
             }
             
-            # Determine if stuck
+            # Determine if workflow is stuck
             if unhandled_duration_task:
                 analysis["is_stuck"] = True
                 analysis["reason"] = "Duration of 4 days is not handled by the workflow"

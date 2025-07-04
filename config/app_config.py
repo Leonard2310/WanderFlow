@@ -1,5 +1,9 @@
 """
-Configuration module for WanderFlow application
+Configuration module for WanderFlow travel planning application.
+
+This module provides centralized configuration management for the WanderFlow
+application, including country data, workflow settings, UI configurations,
+and environment variable handling.
 """
 
 import os
@@ -8,21 +12,27 @@ import streamlit as st
 from dotenv import load_dotenv
 
 class AppConfig:
-    """Centralized configuration management"""
+    """
+    Centralized configuration management for WanderFlow application.
+    
+    This class provides static methods and constants for managing
+    application settings, country data, workflow configuration,
+    and environment variables.
+    """
 
-    # App constants
+    # Application constants
     APP_TITLE = "WanderFlow - Plan Your Adventure"
     APP_ICON = "🌍"
 
-    # Workflow configuration
+    # Workflow configuration settings
     WORKFLOW_NAME = "WanderFlow"
     WORKFLOW_VERSION = 26
 
-    # UI Configuration
+    # User interface configuration
     MAX_ATTEMPTS = 30
     POLL_INTERVAL = 2  # seconds
 
-    # Countries data organized by region
+    # Geographic data organized by continent/region
     COUNTRIES_DATA = {
         "Europe": {
             "countries": ["Italy", "France", "Spain", "Germany", "Greece", "Portugal",
@@ -72,7 +82,7 @@ class AppConfig:
         }
     }
 
-    # Country flags mapping (added for better UX)
+    # Country flags mapping for enhanced user experience
     COUNTRY_FLAGS = {
         "Italy": "🇮🇹", "France": "🇫🇷", "Spain": "🇪🇸", "Germany": "🇩🇪", "Greece": "🇬🇷", "Portugal": "🇵🇹",
         "United Kingdom": "🇬🇧", "Malta": "🇲🇹", "Netherlands": "🇳🇱", "Switzerland": "🇨🇭", "Austria": "🇦🇹",
@@ -94,7 +104,7 @@ class AppConfig:
         "Saudi Arabia": "🇸🇦", "Oman": "🇴🇲", "Kuwait": "🇰🇼", "Lebanon": "🇱🇧", "Cyprus": "🇨🇾"
     }
 
-    # Form options
+    # Form configuration options for user preferences
     DESTINATION_TYPES = {
         "natura": "🌿 Nature & Wildlife",
         "città": "🏙️ Cities & Culture",
@@ -110,12 +120,17 @@ class AppConfig:
         "gastronomia": "🍽️ Food & Gastronomy"
     }
 
-    # GeoJSON URL for world countries
+    # External data source URLs
     WORLD_GEOJSON_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 
     @classmethod
     def get_country_options(cls) -> List[str]:
-        """Get all country options for selectbox with flags"""
+        """
+        Get all country options for selectbox with flag emojis.
+        
+        Returns:
+            List[str]: List of formatted country names with flag emojis
+        """
         country_options = []  # Removed empty option for cleaner UI
         for region, region_data in cls.COUNTRIES_DATA.items():
             for country in region_data["countries"]:
@@ -125,7 +140,13 @@ class AppConfig:
 
     @classmethod
     def get_countries_by_region(cls) -> Dict[str, List[str]]:
-        """Get countries organized by region with flags"""
+        """
+        Get countries organized by region with flag emojis.
+        
+        Returns:
+            Dict[str, List[str]]: Dictionary mapping region names to lists 
+                                of formatted country names with flags
+        """
         countries_by_region = {}
         for region, region_data in cls.COUNTRIES_DATA.items():
             countries_by_region[region] = []
@@ -136,10 +157,18 @@ class AppConfig:
 
     @classmethod
     def get_country_options_grouped(cls) -> List[str]:
-        """Get all country options grouped by continent for better UX"""
+        """
+        Get country options grouped by continent for enhanced user experience.
+        
+        Creates a hierarchical list with continent headers and indented
+        country names, improving navigation in dropdown selectors.
+        
+        Returns:
+            List[str]: Formatted list with continent headers and countries
+        """
         grouped_options = []
         
-        # Order of continents for better UX
+        # Order of continents for optimal user experience
         continent_order = ["Europe", "North America", "Asia", "Africa", "South America", "Oceania", "Middle East"]
         
         for continent in continent_order:
@@ -157,7 +186,18 @@ class AppConfig:
 
     @classmethod
     def extract_country_from_grouped_option(cls, option: str) -> str:
-        """Extract country name from grouped selectbox option"""
+        """
+        Extract clean country name from grouped selectbox option.
+        
+        Removes formatting characters, indentation, and flag emojis
+        from grouped selectbox options to get the actual country name.
+        
+        Args:
+            option (str): Formatted option string from grouped selectbox
+            
+        Returns:
+            str: Clean country name without formatting
+        """
         if not option or option.startswith("────") or option.startswith("Select"):
             return ""
         
@@ -166,7 +206,7 @@ class AppConfig:
         if option.startswith("   "):
             option = option[3:]  # Remove the 3 leading spaces
         
-        # Remove flag at the end
+        # Remove flag emoji at the end
         for flag in cls.COUNTRY_FLAGS.values():
             if option.endswith(flag):
                 return option.replace(flag, "").strip()
@@ -175,7 +215,18 @@ class AppConfig:
 
     @classmethod
     def extract_country_from_option(cls, option: str) -> str:
-        """Extract country name from selectbox option, removing flag"""
+        """
+        Extract country name from selectbox option, removing flag emoji.
+        
+        Removes flag emojis from country options to get clean country names
+        for processing and API calls.
+        
+        Args:
+            option (str): Country option string with potential flag emoji
+            
+        Returns:
+            str: Clean country name without flag emoji
+        """
         if option:
             # Remove any flag emoji at the end
             for flag in cls.COUNTRY_FLAGS.values():
@@ -187,16 +238,38 @@ class AppConfig:
 
     @classmethod
     def get_region_info(cls, country: str) -> Tuple[List[float], int]:
-        """Get region center and zoom for a country"""
+        """
+        Get region center coordinates and zoom level for a country.
+        
+        Returns the geographic center and appropriate zoom level for
+        the region containing the specified country.
+        
+        Args:
+            country (str): Name of the country to locate
+            
+        Returns:
+            Tuple[List[float], int]: Center coordinates [lat, lng] and zoom level
+        """
         for region_data in cls.COUNTRIES_DATA.values():
             if country in region_data["countries"]:
                 return region_data["center"], region_data["zoom"]
-        return [30, 0], 2  # Default center and zoom
+        return [30, 0], 2  # Default center and zoom if country not found
 
     @classmethod
     def get_country_specific_info(cls, country: str) -> Dict[str, Any]:
-        """Get specific coordinates and zoom for individual countries"""
-        # Extended mapping for better country-specific positioning
+        """
+        Get specific coordinates and zoom level for individual countries.
+        
+        Provides precise geographic center and optimal zoom level for
+        individual countries, falling back to region info if not found.
+        
+        Args:
+            country (str): Name of the country
+            
+        Returns:
+            Dict[str, Any]: Dictionary with center coordinates and zoom level
+        """
+        # Extended mapping for optimal country-specific positioning
         country_coords = {
             "Italy": {"center": [41.8719, 12.5674], "zoom": 6},
             "France": {"center": [46.2276, 2.2137], "zoom": 6},
@@ -294,13 +367,21 @@ class AppConfig:
         if country in country_coords:
             return country_coords[country]["center"], country_coords[country]["zoom"]
         else:
-            # Fallback to region info
+            # Fallback to region information if country not in specific mapping
             return cls.get_region_info(country)
 
     @classmethod
     @st.cache_data
     def load_environment(cls):
-        """Load environment variables"""
+        """
+        Load environment variables from configuration file.
+        
+        Loads Conductor workflow engine configuration from the
+        credentials.env file for secure API access.
+        
+        Returns:
+            Dict[str, str]: Dictionary of environment variables
+        """
         load_dotenv("credentials.env")
         return {
             "auth_key": os.getenv("CONDUCTOR_AUTH_KEY"),
@@ -310,6 +391,14 @@ class AppConfig:
 
     @classmethod
     def validate_environment(cls) -> bool:
-        """Validate that all required environment variables are set"""
+        """
+        Validate that all required environment variables are properly set.
+        
+        Checks that all necessary Conductor configuration variables
+        are present and not empty for proper workflow execution.
+        
+        Returns:
+            bool: True if all required variables are set, False otherwise
+        """
         env_vars = cls.load_environment()
         return all(env_vars.values())

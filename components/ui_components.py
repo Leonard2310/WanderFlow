@@ -1,5 +1,9 @@
 """
-UI Components for WanderFlow application - Updated with improved spacing and styling
+UI Components for WanderFlow travel planning application.
+
+This module provides a comprehensive collection of reusable UI components
+for the WanderFlow travel planning application. It includes custom CSS styling,
+form elements, interactive components, and layout management functions.
 """
 
 import streamlit as st
@@ -7,16 +11,29 @@ import json
 from typing import List, Tuple, Optional, Any
 from datetime import date
 
-# Assuming these are defined elsewhere in your project
 from config.app_config import AppConfig
 from utils.session_state import SessionState
 
 class UIComponents:
-    """Collection of reusable UI components"""
+    """
+    Collection of reusable UI components for the WanderFlow application.
+    
+    This class provides static methods for rendering various UI elements
+    including styling, forms, navigation, and display components.
+    """
 
     @staticmethod
     def apply_custom_css():
-        """Apply custom CSS styling to the app"""
+        """
+        Apply custom CSS styling to the Streamlit application.
+        
+        Includes comprehensive styling for:
+        - Application background and layout
+        - Form elements and inputs
+        - Buttons and interactive components
+        - Step indicators and progress elements
+        - Responsive design and spacing
+        """
         st.markdown("""
         <style>
             /* General app styling */
@@ -71,9 +88,7 @@ class UIComponents:
                 border-left: none;
             }
 
-            /* Removed global text color forcing to allow inline styles */
-
-            /* Removed section header color forcing to allow inline styles */
+            /* Allow inline styles to work properly */
 
             /* Buttons */
             .stButton > button {
@@ -306,21 +321,22 @@ class UIComponents:
 
             /* Special styling for itinerary title - darker and more prominent */
             .stMarkdown h3:contains("Your Personalized Travel Itinerary"),
-            .stMarkdown h3[id*="personalized"],
-            /* Removed specific header color forcing to allow inline styles */
+            .stMarkdown h3[id*="personalized"] {
+                /* Inline styles take precedence */
+            }
 
-            /* REDUCE SPACING BETWEEN ELEMENTS - ULTRA COMPATTO */
+            /* Reduce spacing between elements - ultra compact */
             .stMarkdown {
                 margin-bottom: 0rem !important;
                 margin-top: 0rem !important;
             }
 
-            /* Column spacing - più compatto */
+            /* Column spacing - more compact */
             .stColumn {
                 padding: 0.05rem !important;
             }
 
-            /* Compact form elements - MARGINI RIDOTTI AL MINIMO */
+            /* Compact form elements - reduced margins to minimum */
             .stSelectbox,
             .stNumberInput,
             .stDateInput,
@@ -359,13 +375,13 @@ class UIComponents:
                 margin-top: 0.05rem !important;
             }
 
-            /* Riduci spazi nei form */
+            /* Reduce spacing in forms */
             .stForm {
                 padding: 0.5rem !important;
                 margin: 0.25rem 0 !important;
             }
 
-            /* Riduci spazi nelle sezioni */
+            /* Reduce spacing in sections */
             .section-container {
                 background: transparent !important;
                 border-radius: 0px;
@@ -375,7 +391,7 @@ class UIComponents:
                 border-left: none;
             }
 
-            /* Headers più compatti */
+            /* More compact headers */
             .section-container h3 {
                 color: #2c3e50 !important;
                 margin-bottom: 0.25rem !important;
@@ -385,30 +401,30 @@ class UIComponents:
                 text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
             }
 
-            /* Riduci spazio tra grid di checkbox */
+            /* Reduce space between checkbox grid */
             .stColumn {
                 padding-left: 0.05rem !important;
                 padding-right: 0.05rem !important;
             }
 
-            /* Containers compatti */
+            /* Compact containers */
             div[data-testid="column"] {
                 padding: 0.05rem !important;
             }
 
-            /* Spazio minimo tra le righe */
+            /* Minimal spacing between rows */
             .block-container .element-container {
                 margin: 0.05rem 0 !important;
             }
             
-            /* Migliora l'allineamento del country selector */
+            /* Improve alignment of country selector */
             .country-selector-row {
                 display: flex;
                 align-items: end;
                 gap: 1rem;
             }
 
-            /* Allinea il pulsante con il selectbox */
+            /* Align button with selectbox */
             .stButton > button {
                 margin-top: 0.5rem;
             }
@@ -465,7 +481,7 @@ class UIComponents:
                 margin-left: 0.5rem !important;
             }
 
-            /* COMPLETION BANNER - HIGHEST PRIORITY STYLES */
+            /* Completion banner - highest priority styles */
             .completion-banner,
             .completion-banner *,
             .completion-banner h3,
@@ -500,7 +516,12 @@ class UIComponents:
 
     @staticmethod
     def render_header():
-        """Render the main application header"""
+        """
+        Render the main application header.
+        
+        Displays the WanderFlow application title with custom styling
+        using the configured app title from AppConfig.
+        """
         st.markdown(
             f'<h1 class="main-header">{AppConfig.APP_TITLE}</h1>',
             unsafe_allow_html=True
@@ -508,7 +529,15 @@ class UIComponents:
 
     @staticmethod
     def create_step_indicator(current_step: int):
-        """Create a step progress indicator"""
+        """
+        Create a visual step progress indicator.
+        
+        Displays a three-step progress indicator showing the current position
+        in the travel planning workflow.
+        
+        Args:
+            current_step (int): The current step number (1-3)
+        """
         steps = [
             ("1", "Preferences", 1),
             ("2", "Options", 2),
@@ -528,7 +557,15 @@ class UIComponents:
 
     @staticmethod
     def render_vacation_styles() -> List[str]:
-        """Render vacation style selection"""
+        """
+        Render vacation style selection interface.
+        
+        Displays checkboxes for different vacation styles configured
+        in AppConfig, allowing users to select multiple preferences.
+        
+        Returns:
+            List[str]: List of selected vacation style keys
+        """
         with st.container():
             st.markdown('<div class="section-container">', unsafe_allow_html=True)
             st.markdown('<h3>🎨 What\'s your vacation style?</h3>', unsafe_allow_html=True)
@@ -547,7 +584,19 @@ class UIComponents:
 
     @staticmethod
     def process_itinerary_data(itinerary_data: Any) -> str:
-        """Process itinerary data and return formatted text"""
+        """
+        Process itinerary data and return formatted text.
+        
+        Handles various itinerary data formats including JSON strings,
+        lists, and dictionaries. Provides selection interface for multiple
+        itinerary options and formats output appropriately.
+        
+        Args:
+            itinerary_data (Any): Raw itinerary data in various formats
+            
+        Returns:
+            str: Formatted itinerary text for display
+        """
         try:
             if isinstance(itinerary_data, str):
                 try:
@@ -579,7 +628,15 @@ class UIComponents:
 
     @staticmethod
     def render_itinerary(json_itinerary: dict):
-        """Render itinerary details in a formatted block"""
+        """
+        Render itinerary details in a formatted code block.
+        
+        Displays the itinerary data as formatted JSON within a styled
+        container for clear presentation and readability.
+        
+        Args:
+            json_itinerary (dict): Itinerary data as dictionary
+        """
         st.markdown('<div class="itinerary-container">', unsafe_allow_html=True)
         st.markdown("### Itinerary JSON")
         st.code(json.dumps(json_itinerary, indent=2), language="json")
@@ -587,7 +644,16 @@ class UIComponents:
         
     @staticmethod
     def render_duration_section() -> Tuple[int, Optional[date]]:
-        """Render the duration and period selection section"""
+        """
+        Render the duration and period selection section.
+        
+        Displays input fields for trip duration (in days) and preferred
+        travel period, providing a user-friendly interface for temporal
+        trip planning parameters.
+        
+        Returns:
+            Tuple[int, Optional[date]]: Trip duration and selected travel date
+        """
         with st.container():
             st.markdown('<div class="section-container">', unsafe_allow_html=True)
             st.markdown('<h3>📅 Trip Duration & Timing</h3>', unsafe_allow_html=True)
@@ -604,7 +670,12 @@ class UIComponents:
 
     @staticmethod
     def render_sidebar():
-        """Render the sidebar with app information"""
+        """
+        Render the sidebar with application information and debug tools.
+        
+        Displays WanderFlow branding, session information when a workflow
+        is active, and optional debug information for development purposes.
+        """
         with st.sidebar:
             st.markdown("""
             <div class="sidebar-section-container">
@@ -633,18 +704,23 @@ class UIComponents:
                 debug_info = SessionState.get_debug_info()
                 st.json(debug_info)
                 
-                # Aggiungi informazioni workflow se disponibile
+                # Add workflow information if available
                 workflow_id = SessionState.get("workflow_id")
                 if workflow_id:
                     from components.workflow_manager import WorkflowManager
-                    # Nota: Questo richiederà l'accesso al workflow_manager
+                    # Note: This requires access to the workflow_manager
                     st.markdown("**Workflow Status:**")
                     if st.button("🔍 Show Workflow Details", key="workflow_debug_btn"):
                         st.json({"workflow_id": workflow_id})
 
     @staticmethod
     def render_footer():
-        """Render the application footer"""
+        """
+        Render the application footer with branding.
+        
+        Displays WanderFlow branding and acknowledgments in a centered
+        footer layout with appropriate styling.
+        """
         st.markdown("---")
         st.markdown(
             """
@@ -658,7 +734,12 @@ class UIComponents:
 
     @staticmethod
     def handle_workflow_error():
-        """Handle workflow errors with user-friendly interface"""
+        """
+        Handle workflow errors with user-friendly interface.
+        
+        Provides error messaging and recovery options when workflow
+        issues occur, including restart and debug information display.
+        """
         st.error("⚠️ Something went wrong with your trip planning workflow.")
 
         col1, col2 = st.columns(2)
@@ -674,7 +755,15 @@ class UIComponents:
     
     @staticmethod
     def render_destination_types() -> List[str]:
-        """Render destination type selection"""
+        """
+        Render destination type selection interface.
+        
+        Displays checkboxes for different destination types configured
+        in AppConfig, allowing users to select multiple preferences.
+        
+        Returns:
+            List[str]: List of selected destination type keys
+        """
         with st.container():
             st.markdown('<div class="section-container">', unsafe_allow_html=True)
             st.markdown('<h3>🏞️ What type of destination appeals to you?</h3>', unsafe_allow_html=True)
@@ -693,13 +782,22 @@ class UIComponents:
 
     @staticmethod
     def render_country_selection() -> str:
-        """Render country selection dropdown grouped by continent with flags"""
+        """
+        Render country selection dropdown grouped by continent.
+        
+        Displays an organized country selection interface with countries
+        grouped by continent for easier navigation. Includes validation
+        to prevent selection of continent headers.
+        
+        Returns:
+            str: Selected country name, empty string if none selected
+        """
         with st.container():
             st.markdown('<div class="section-container">', unsafe_allow_html=True)
             st.markdown('<h3>🌍 Preferred Country</h3>', unsafe_allow_html=True)
             st.markdown('<p style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Countries are organized by continent for easier selection</p>', unsafe_allow_html=True)
 
-            # Avvia riga con stile custom
+            # Start row with custom styling
             st.markdown('<div class="country-selector-row">', unsafe_allow_html=True)
 
             # Use grouped country options
@@ -757,7 +855,15 @@ class UIComponents:
 
     @staticmethod
     def render_itinerary_display(itinerary_text: str):
-        """Render the itinerary display"""
+        """
+        Render the itinerary display with proper formatting.
+        
+        Displays the generated itinerary text in a styled container
+        with appropriate formatting for JSON or plain text content.
+        
+        Args:
+            itinerary_text (str): The itinerary content to display
+        """
         with st.container():
             st.markdown('<div class="itinerary-container">', unsafe_allow_html=True)
             st.markdown("**📋 Your Travel Plan:**")

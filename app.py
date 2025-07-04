@@ -1,3 +1,17 @@
+"""
+WanderFlow - AI-Powered Travel Planning Application
+
+This is the main application file for WanderFlow, an intelligent travel planning system
+that uses Orkes Conductor workflows to generate personalized travel itineraries.
+
+The application provides:
+- Interactive travel preference collection
+- AI-powered itinerary generation
+- Country selection with interactive maps
+- PDF export functionality
+- Support for both short trips (≤3 days) and long trips (≥5 days)
+"""
+
 import os
 import time
 import uuid
@@ -15,7 +29,7 @@ from conductor.client.configuration.configuration import (
 from conductor.client.workflow.executor.workflow_executor import WorkflowExecutor
 from conductor.client.orkes.orkes_task_client import OrkesTaskClient
 
-# Import dei moduli personalizzati
+# Import custom modules
 from components.ui_components import UIComponents
 from components.map_components import MapComponents
 from components.workflow_manager import WorkflowManager
@@ -23,7 +37,7 @@ from utils.session_state import SessionState
 from utils.pdf_generator import PDFGenerator
 from config.app_config import AppConfig
 
-# ================= CONFIGURAZIONE STREAMLIT =================
+# ================= STREAMLIT CONFIGURATION =================
 st.set_page_config(
     page_title="WanderFlow - Plan Your Adventure",
     page_icon="🌍",
@@ -31,13 +45,23 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Applica CSS personalizzato
+# Apply custom CSS styling
 UIComponents.apply_custom_css()
 
-# ================= CONFIGURAZIONE ORKES =================
+# ================= ORKES CONDUCTOR CONFIGURATION =================
 @st.cache_resource
 def create_conductor_clients():
-    """Crea e configura i client Orkes, memorizzandoli nella cache."""
+    """
+    Create and configure Orkes Conductor clients with authentication.
+    
+    This function initializes the workflow executor and task client needed
+    to interact with the Orkes Conductor service. The clients are cached
+    to avoid recreation on every app reload.
+    
+    Returns:
+        tuple: A tuple containing (WorkflowExecutor, OrkesTaskClient) instances,
+               or (None, None) if configuration fails
+    """
     load_dotenv("credentials.env")
 
     key_id = os.getenv("CONDUCTOR_AUTH_KEY")
@@ -65,28 +89,36 @@ executor, task_client = create_conductor_clients()
 if executor is None or task_client is None:
     st.stop()
 
-# Inizializza l'istanza di WorkflowManager
+# Initialize WorkflowManager instance
 workflow_manager = WorkflowManager(executor, task_client)
 
-# ================= INIZIALIZZAZIONE DELLO STATO DELLA SESSIONE =================
+# ================= SESSION STATE INITIALIZATION =================
 SessionState.initialize()
 
-# ================= INTERFACCIA PRINCIPALE =================
+# ================= MAIN APPLICATION INTERFACE =================
 def main():
-    """Funzione principale dell'applicazione"""
+    """
+    Main application function that handles the primary workflow routing.
     
-    # Header
+    This function manages the overall application flow, displaying different
+    screens based on the current workflow state. It handles:
+    - Welcome screen for new users
+    - Preferences form for trip configuration
+    - Itinerary results display
+    - Completion screen
+    """
+    # Render header
     UIComponents.render_header()
     
-    # Indicatore di progresso
+    # Display progress indicator
     UIComponents.create_step_indicator(SessionState.get_current_step())
     
-    # Mostra la schermata di benvenuto se il workflow non è iniziato
+    # Show welcome screen if workflow hasn't started
     if not SessionState.is_workflow_started():
         show_welcome_screen()
         return
     
-    # Routing basato sullo stato del workflow
+    # Route based on workflow state
     if SessionState.get("workflow_completed"):
         show_completion_screen()
     elif not has_travel_content():
@@ -95,19 +127,34 @@ def main():
         show_itinerary_results()
 
 def has_travel_content() -> bool:
-    """Verifica se ci sono contenuti di viaggio disponibili (itinerario o opzioni)"""
-    # Per viaggi lunghi: controlla se c'è un itinerario
+    """
+    Check if travel content (itinerary or travel options) is available.
+    
+    This function determines whether the user has received travel content
+    that can be displayed, supporting both long trips (itineraries) and
+    short trips (travel options).
+    
+    Returns:
+        bool: True if travel content is available, False otherwise
+    """
+    # For long trips: check if itinerary exists
     if SessionState.has_itinerary():
         return True
     
-    # Per viaggi brevi: controlla se ci sono opzioni di viaggio
+    # For short trips: check if travel options exist
     if SessionState.get("travel_options"):
         return True
     
     return False
 
 def show_welcome_screen():
-    """Mostra la schermata di benvenuto e avvia il workflow"""
+    """
+    Display the welcome screen and handle workflow initialization.
+    
+    This function shows the initial landing page where users can start
+    their trip planning journey. When the user clicks the start button,
+    it initializes a new workflow instance.
+    """
     st.markdown("---")
     
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -122,33 +169,39 @@ def show_welcome_screen():
         </div>
         """, unsafe_allow_html=True)
         
-        # Uso di un container per evitare duplicazioni
+        # Use container to avoid duplications
         with st.container():
             if st.button("🚀 Start Planning Your Trip", key="start_btn", use_container_width=True):
                 with st.spinner("Starting your trip planning workflow..."):
                     try:
-                        # Usa il metodo start_workflow di WorkflowManager
+                        # Use WorkflowManager's start_workflow method
                         wf_id = workflow_manager.start_workflow()
                         if wf_id:
                             SessionState.reset()
                             SessionState.set("workflow_id", wf_id)
                             SessionState.set_step(1)
-                            # Ricarica la pagina senza delay o messaggi aggiuntivi
                             st.rerun()
                         else:
-                            st.error("Errore nell'avvio del workflow")
+                            st.error("Error starting workflow")
                     except Exception as e:
-                        st.error(f"Errore generale nell'avvio del workflow: {e}")
+                        st.error(f"General error starting workflow: {e}")
 
 def show_preferences_form():
+    """
+    Display the travel preferences form for user input.
+    
+    This function renders the main preferences collection interface where
+    users can specify their travel duration, destinations, country preferences,
+    and vacation styles. It handles form validation and workflow task completion.
+    """
     SessionState.set_step(1)
 
     workflow_manager.cache_task("UserPreferences", "pref_task_id")
 
     if not SessionState.get("pref_task_id"):
-        st.warning("⏳ In attesa del task delle preferenze dal workflow...")
+        st.warning("⏳ Waiting for preferences task from workflow...")
         
-        # NUOVO: Controlla se il workflow è bloccato
+        # Check if workflow is stuck
         if SessionState.get("workflow_id"):
             stuck_analysis = workflow_manager.is_workflow_stuck(SessionState.get("workflow_id"))
             if stuck_analysis.get("is_stuck"):
@@ -165,17 +218,16 @@ def show_preferences_form():
 
     duration, period = UIComponents.render_duration_section()
     
-    # NUOVO: Avviso per durata di 4 giorni
+    # Warning for 4-day duration
     if duration == 4:
         st.warning("⚠️ **Note:** The current workflow supports trips of 3 days or fewer (city tours) or 5+ days (regional exploration). 4-day trips are not currently supported.")
     
     selected_destinations = UIComponents.render_destination_types()
 
-    # Qui prendi la selezione senza effetto collaterale
+    # Get country selection without side effects
     selected_country = UIComponents.render_country_selection()
 
-    # Renderizza la mappa interattiva solo se è selezionato un paese
-    # Se selected_country è None o vuoto, la mappa scompare completamente
+    # Render interactive map only if a country is selected
     if selected_country:
         MapComponents.render_interactive_map(selected_country)
 
@@ -195,12 +247,12 @@ def show_preferences_form():
             st.error("⚠️ Please select at least one destination type or vacation style.")
             return
 
-        # NUOVO: Controllo per durata di 4 giorni
+        # Check for 4-day duration
         if duration == 4:
             st.warning("⚠️ The current workflow doesn't support exactly 4-day trips. Please choose 3 days or fewer (for city tours) or 5+ days (for regional exploration).")
             return
 
-        # Ora il paese selezionato lo usi direttamente qui, senza dipendere da SessionState
+        # Use the selected country directly here, without depending on SessionState
         preferences = [period.strftime("%d/%m/%Y")]
         preferences.extend(selected_destinations)
         if selected_country:
@@ -215,13 +267,13 @@ def show_preferences_form():
             }):
                 st.success("🎉 Preferences submitted successfully!")
                 
-                # Salva la durata per determinare il flusso
+                # Save duration to determine flow
                 SessionState.set("trip_duration", duration)
                 SessionState.set("is_short_trip", duration <= 3)
 
-                # Determina quale task aspettare in base alla durata
+                # Determine which task to wait for based on duration
                 if duration <= 3:
-                    # Viaggio breve: aspetta ChoiceTravelCity
+                    # Short trip: wait for ChoiceTravelCity
                     travel_options = workflow_manager.wait_for_choice_travel_city_task(
                         SessionState.get("workflow_id")
                     )
@@ -235,7 +287,7 @@ def show_preferences_form():
                     else:
                         st.error("❌ Error generating travel options or timeout reached.")
                 else:
-                    # Viaggio lungo: aspetta ShowItinerary (logica esistente)
+                    # Long trip: wait for ShowItinerary (existing logic)
                     itinerary_data = workflow_manager.wait_for_itinerary_task(
                         SessionState.get("workflow_id")
                     )
@@ -253,12 +305,18 @@ def show_preferences_form():
             st.error("⚠️ Preference task ID not found.")
 
 def show_itinerary_results():
-    """Mostra i risultati dell'itinerario e le opzioni successive"""
+    """
+    Display itinerary results and subsequent options.
+    
+    This function routes between short trip options (≤3 days) and long trip
+    itineraries (≥5 days), displaying the appropriate interface based on
+    the trip duration.
+    """
     SessionState.set_step(2)
     
     st.markdown('<div class="custom-form-container">', unsafe_allow_html=True)
     
-    # Controlla se è un viaggio breve o lungo
+    # Check if it's a short or long trip
     is_short_trip = SessionState.get("is_short_trip", False)
     
     if is_short_trip:
@@ -269,7 +327,13 @@ def show_itinerary_results():
     st.markdown('</div>', unsafe_allow_html=True)
 
 def show_travel_options_selection():
-    """Mostra le 3 opzioni di viaggio per viaggi brevi"""
+    """
+    Display the 3 travel options for short trips (≤3 days).
+    
+    This function handles the display and selection of travel options for
+    short trips, allowing users to choose from 3 different city tour options
+    generated by the workflow.
+    """
     st.markdown("### 🏙️ Choose Your Perfect City Trip")
     
     try:
@@ -284,16 +348,16 @@ def show_travel_options_selection():
                 st.rerun()
             return
         
-        # Se l'utente ha già selezionato un'opzione E il task è completato, mostra l'itinerario
+        # If user has already selected an option AND the task is completed, show the itinerary
         if selected_option and choice_task_completed:
             show_selected_itinerary()
             return
         
-        # Se l'utente non ha ancora selezionato un'opzione, mostra le scelte
+        # If user hasn't selected an option yet, show the choices
         if not selected_option:
             st.info("Please select one of the three travel options below:")
             
-            # Mostra le 3 opzioni in colonne
+            # Display the 3 options in columns
             col1, col2, col3 = st.columns(3)
             
             with col1:
@@ -314,7 +378,7 @@ def show_travel_options_selection():
                 if st.button("Choose Option 3", key="option3", use_container_width=True):
                     select_travel_option(3, travel_options["itinerary3"])
         else:
-            # L'utente ha selezionato ma il task non è ancora completato
+            # User has selected but task is not yet completed
             st.info("Processing your selection...")
             time.sleep(0.5)
             st.rerun()
@@ -326,11 +390,17 @@ def show_travel_options_selection():
             st.rerun()
 
 def select_travel_option(option_number: int, itinerary_text: str):
-    """Seleziona una delle opzioni di viaggio e completa il task"""
+    """
+    Select one of the travel options and complete the workflow task.
+    
+    Args:
+        option_number (int): The selected option number (1, 2, or 3)
+        itinerary_text (str): The itinerary text for the selected option
+    """
     choice_task_id = SessionState.get("choice_travel_city_task_id")
     
     if choice_task_id:
-        # Completa il task ChoiceTravelCity con l'opzione selezionata
+        # Complete the ChoiceTravelCity task with the selected option
         success = workflow_manager.complete_task(choice_task_id, "COMPLETED", {
             "user_choice": f"option{option_number}",
             "selected_option": option_number,
@@ -338,12 +408,12 @@ def select_travel_option(option_number: int, itinerary_text: str):
         })
         
         if success:
-            # Aggiorna lo stato della sessione
+            # Update session state
             SessionState.set("selected_travel_option", option_number)
             SessionState.set("itinerary", itinerary_text)
             SessionState.set("choice_task_completed", True)
             st.success(f"🎉 Option {option_number} selected!")
-            time.sleep(1)  # Breve pausa per mostrare il messaggio
+            time.sleep(1)
             st.rerun()
         else:
             st.error("❌ Error selecting travel option. Please try again.")
@@ -351,7 +421,12 @@ def select_travel_option(option_number: int, itinerary_text: str):
         st.error("⚠️ Choice task ID not found. Please restart the workflow.")
 
 def show_selected_itinerary():
-    """Mostra l'itinerario selezionato e le opzioni successive"""
+    """
+    Display the selected itinerary and subsequent options for short trips.
+    
+    This function shows the user's selected travel option and provides
+    actions like downloading PDF and requesting additional information.
+    """
     selected_option = SessionState.get("selected_travel_option")
     itinerary_data = SessionState.get("itinerary")
     
@@ -361,11 +436,11 @@ def show_selected_itinerary():
         st.warning("No itinerary found.")
         return
     
-    # Mostra l'itinerario selezionato
+    # Display the selected itinerary
     itinerary_text = UIComponents.process_itinerary_data(itinerary_data)
     UIComponents.render_itinerary_display(itinerary_text)
     
-    # Pulsante per scaricare PDF
+    # PDF download button
     extra_info = SessionState.get("extra_info")
     pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text, extra_info=extra_info)
     if pdf_buffer:
@@ -377,11 +452,16 @@ def show_selected_itinerary():
             use_container_width=True
         )
     
-    # Per viaggi brevi, usa la stessa logica di ShowItinerary ma senza il task
+    # For short trips, use the same logic as ShowItinerary but without the task
     show_itinerary_actions(itinerary_text, use_show_task=False)
 
 def show_single_itinerary_results():
-    """Mostra i risultati dell'itinerario per viaggi lunghi (logica originale)"""
+    """
+    Display itinerary results for long trips (≥5 days).
+    
+    This function handles the display of single itineraries for longer trips,
+    showing the generated itinerary and providing download and action options.
+    """
     st.markdown("### 🌟 Your Personalized Travel Itinerary")
     
     try:
@@ -394,11 +474,11 @@ def show_single_itinerary_results():
                 st.rerun()
             return
         
-        # Gestione e visualizzazione itinerario
+        # Handle and display itinerary
         itinerary_text = UIComponents.process_itinerary_data(itinerary_data)
         UIComponents.render_itinerary_display(itinerary_text)
         
-        # Pulsante per scaricare PDF
+        # PDF download button
         extra_info = SessionState.get("extra_info")
         pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text, extra_info=extra_info)
         if pdf_buffer:
@@ -410,7 +490,7 @@ def show_single_itinerary_results():
                 use_container_width=True
             )
         
-        # Mostra azioni dell'itinerario
+        # Show itinerary actions
         show_itinerary_actions(itinerary_text, use_show_task=True)
     
     except Exception as e:
@@ -420,23 +500,33 @@ def show_single_itinerary_results():
             st.rerun()
 
 def show_itinerary_actions(itinerary_text: str, use_show_task: bool = True):
-    """Mostra le azioni comuni per entrambi i tipi di itinerario"""
+    """
+    Display common actions for both types of itineraries.
+    
+    This function provides the interface for accepting itineraries and
+    requesting additional information, supporting both short and long trips.
+    
+    Args:
+        itinerary_text (str): The itinerary text to work with
+        use_show_task (bool): Whether to use ShowItinerary task (True for long trips,
+                             False for short trips)
+    """
     st.markdown("### 🎯 What would you like to do next?")
     
-    # Pulsanti di azione
+    # Action buttons
     col1, col2 = st.columns(2)
     
     with col1:
-        # Pulsante di accettazione dell'itinerario
+        # Itinerary acceptance button
         itinerary_confirmed = SessionState.get("itinerary_confirmed")
         
         if itinerary_confirmed:
-            # Mostra stato confermato invece del pulsante
+            # Show confirmed state instead of button
             st.success("✅ Itinerary Accepted!")
             st.info("You can now request additional information if needed.")
         elif st.button("✅ Accept This Itinerary", key="accept_itinerary", use_container_width=True):
             if use_show_task:
-                # Per viaggi lunghi: usa ShowItinerary task
+                # For long trips: use ShowItinerary task
                 workflow_manager.cache_task("ShowItinerary", "show_task_id")
                 show_task_id = SessionState.get("show_task_id")
                 if show_task_id:
@@ -452,23 +542,29 @@ def show_itinerary_actions(itinerary_text: str, use_show_task: bool = True):
                 else:
                     st.error("⚠️ ShowItinerary task ID not found.")
             else:
-                # Per viaggi brevi: non c'è ShowItinerary task, marca solo come confermato
+                # For short trips: no ShowItinerary task, just mark as confirmed
                 SessionState.set("itinerary_confirmed", True)
                 st.success("🎉 Itinerary accepted! You can now request additional info or plan a new trip.")
                 st.rerun()
     
     with col2:
-        # Gestione richiesta informazioni aggiuntive
+        # Handle additional information request
         show_additional_info_options()
     
-    # Gestione info aggiuntive
+    # Handle additional info
     handle_additional_info()
     
-    # Pulsanti finali
+    # Final buttons
     show_final_buttons()
 
 def show_additional_info_options():
-    """Mostra le opzioni per richiedere informazioni aggiuntive"""
+    """
+    Display options for requesting additional information.
+    
+    This function shows the interface for users to request additional travel
+    information after accepting their itinerary. It manages the Yes/No choice
+    workflow task.
+    """
     itinerary_confirmed = SessionState.get("itinerary_confirmed")
     
     if not itinerary_confirmed:
@@ -478,7 +574,7 @@ def show_additional_info_options():
         request_task_id = SessionState.get("request_confirmation_task_id")
         confirmation_response = SessionState.get("confirmation_response")
         
-        # Se il task è attivo e l'utente non ha ancora risposto
+        # If task is active and user hasn't responded yet
         if request_task_id and confirmation_response is None:
             st.subheader("❓ Request additional information?")
             col_yes, col_no = st.columns(2)
@@ -497,18 +593,23 @@ def show_additional_info_options():
                     else:
                         st.error("❌ Error declining additional info.")
         
-        # Se l'utente ha già risposto, mostra la scelta
+        # If user has already responded, show the choice
         elif confirmation_response:
             st.info(f"Your choice: **{confirmation_response}**")
         else:
             st.info("⏳ Waiting for additional info task to become available...")
 
 def handle_additional_info():
-    """Gestisce le informazioni aggiuntive"""
+    """
+    Handle additional information processing and display.
     
-    # Se l'utente ha scelto "No", vai direttamente alla schermata di completamento
+    This function manages the workflow for additional information:
+    - For users who chose "No": proceeds directly to completion
+    - For users who chose "Yes": waits for and displays additional info
+    - Handles the acceptance of additional information
+    """
+    # If user chose "No", go directly to completion screen
     if SessionState.get("confirmation_response") == "No":
-        # Vai direttamente alla schermata di completamento senza aspettare info aggiuntive
         if not SessionState.get("workflow_completed"):
             st.success("🎉 Trip planning completed successfully!")
             SessionState.set_step(3)
@@ -517,9 +618,9 @@ def handle_additional_info():
             st.rerun()
         return
     
-    # GESTIONE INFO AGGIUNTIVE - SOLO PER CHI HA SCELTO "YES"
+    # Handle additional info - only for users who chose "Yes"
     if SessionState.get("confirmation_response") == "Yes" and not SessionState.get("extra_info"):
-        # Le info aggiuntive vengono dal task ShowMoreInformation
+        # Additional info comes from ShowMoreInformation task
         extra_info_data = workflow_manager.wait_for_additional_info_task(
             SessionState.get("workflow_id")
         )
@@ -527,25 +628,25 @@ def handle_additional_info():
             SessionState.set("extra_info", extra_info_data)
             st.rerun()
     
-    # Mostra info aggiuntive se disponibili (solo per chi ha scelto "Yes")
+    # Display additional info if available (only for users who chose "Yes")
     if SessionState.get("extra_info"):
-        st.subheader("ℹ️ Informazioni aggiuntive")
+        st.subheader("ℹ️ Additional Information")
         st.markdown(SessionState.get("extra_info"))
         
-        # Cache del task ShowMoreInformation per permettere l'accettazione
+        # Cache ShowMoreInformation task to allow acceptance
         workflow_manager.cache_task("ShowMoreInformation", "show_more_info_task_id")
         show_more_info_task_id = SessionState.get("show_more_info_task_id")
         
-        # Pulsante per accettare le info aggiuntive
+        # Button to accept additional info
         if show_more_info_task_id and st.button("✅ Accept Additional Information", key="accept_additional_info", use_container_width=True):
-            # Usa le info aggiuntive dallo stato della sessione
+            # Use additional info from session state
             current_extra_info = SessionState.get("extra_info")
             if workflow_manager.complete_task(show_more_info_task_id, "COMPLETED", {
                 "accepted": True,
                 "additional_info": current_extra_info
             }):
                 st.success("🎉 Additional information accepted!")
-                # Vai direttamente alla schermata di completamento
+                # Go directly to completion screen
                 SessionState.set_step(3)
                 SessionState.set("workflow_completed", True)
                 st.rerun()
@@ -553,8 +654,12 @@ def handle_additional_info():
                 st.error("❌ Error confirming additional information.")
 
 def show_final_buttons():
-    """Mostra i pulsanti finali"""
-    # Pulsanti finali
+    """
+    Display final action buttons.
+    
+    This function renders the final buttons that allow users to start
+    a new trip planning session.
+    """
     col1, col2, col3 = st.columns([1, 1, 1])
     
     with col2:
@@ -563,12 +668,22 @@ def show_final_buttons():
             st.rerun()
 
 def show_completion_screen():
-    """Mostra la schermata di completamento e ringraziamento"""
+    """
+    Display the completion and thank you screen.
+    
+    This function shows the final screen after successful trip planning,
+    including:
+    - Thank you message
+    - Trip summary
+    - Final PDF download option
+    - Application features showcase
+    - Option to plan another trip
+    """
     SessionState.set_step(3)
     
     st.markdown('<div class="custom-form-container">', unsafe_allow_html=True)
     
-    # Header di completamento
+    # Completion header
     st.markdown("""
     <div style="text-align: center; padding: 2rem 0;">
         <h1 style="color: #28a745; font-size: 2.5rem; margin-bottom: 1rem;">
@@ -580,7 +695,7 @@ def show_completion_screen():
     </div>
     """, unsafe_allow_html=True)
     
-    # Messaggio di ringraziamento
+    # Thank you message
     st.markdown("""
     <div class="completion-banner" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                 padding: 2rem; border-radius: 15px; margin: 2rem 0;">
@@ -595,13 +710,13 @@ def show_completion_screen():
     </div>
     """, unsafe_allow_html=True)
     
-    # Riepilogo del viaggio
+    # Trip summary
     itinerary_data = SessionState.get("itinerary")
     if itinerary_data:
-        # Mostra un estratto dell'itinerario
+        # Show itinerary excerpt
         itinerary_text = UIComponents.process_itinerary_data(itinerary_data)
         
-        # Pulsante per scaricare PDF finale
+        # Final PDF download button
         st.markdown("### 📄 Take Your Itinerary With You")
         extra_info = SessionState.get("extra_info")
         pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text, extra_info=extra_info)
@@ -615,7 +730,7 @@ def show_completion_screen():
                 type="primary"
             )
     
-    # Statistiche e ringraziamenti
+    # Application features showcase
     st.markdown("---")
     
     col1, col2, col3 = st.columns(3)
@@ -644,7 +759,7 @@ def show_completion_screen():
         </div>
         """, unsafe_allow_html=True)
     
-    # Pulsante per pianificare un nuovo viaggio
+    # Plan another trip button
     st.markdown("---")
     
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -656,25 +771,35 @@ def show_completion_screen():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ================= SIDEBAR E FOOTER =================
+# ================= SIDEBAR AND FOOTER =================
 def show_sidebar_info():
-    """Mostra informazioni nella sidebar"""
+    """
+    Display information in the sidebar.
+    
+    This function renders sidebar content using the UIComponents
+    render_sidebar method to show additional application information.
+    """
     UIComponents.render_sidebar()
 
 def show_footer():
-    """Mostra il footer dell'applicazione"""
+    """
+    Display the application footer.
+    
+    This function renders the footer content using the UIComponents
+    render_footer method to show footer information and links.
+    """
     UIComponents.render_footer()
 
-# ================= ESECUZIONE PRINCIPALE =================
+# ================= MAIN EXECUTION =================
 if __name__ == "__main__":
     try:
-        # Mostra sidebar
+        # Display sidebar
         show_sidebar_info()
         
-        # Esegui l'applicazione principale
+        # Run main application
         main()
         
-        # Mostra footer
+        # Display footer
         show_footer()
         
     except Exception as e:
