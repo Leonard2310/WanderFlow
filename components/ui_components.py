@@ -596,7 +596,7 @@ class UIComponents:
             with col1:
                 duration = st.number_input("Duration (days)", min_value=1, max_value=30, value=7, key="duration_input")
             with col2:
-                period = st.date_input("Preferred travel period", value=date.today(), key="period_input")
+                period = st.date_input("Preferred travel period", value=date.today(), key="period_input", format="DD/MM/YYYY")
 
             st.markdown('</div>', unsafe_allow_html=True)
             

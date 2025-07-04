@@ -6,6 +6,8 @@ for travel itineraries with professional styling and formatting.
 """
 
 import uuid
+import os
+import re
 from io import BytesIO
 from datetime import datetime
 from typing import Optional, Dict, Any, List
@@ -27,19 +29,22 @@ from reportlab.pdfbase.ttfonts import TTFont
 class PDFGenerator:
     """Enhanced PDF Generator for travel itineraries"""
     
-    # Color palette
+    # Color palette - WanderFlow brand colors
     COLORS = {
-        'primary': HexColor('#667eea'),
-        'secondary': HexColor('#764ba2'),
-        'accent': HexColor('#28a745'),
-        'text': HexColor('#333333'),
-        'light_grey': HexColor('#f8f9fa'),
-        'border': HexColor('#e9ecef')
+        'primary': HexColor('#667eea'),        # WanderFlow primary blue
+        'secondary': HexColor('#764ba2'),      # WanderFlow secondary purple
+        'accent': HexColor('#28a745'),         # Success green
+        'text': HexColor('#2c3e50'),          # Dark text
+        'light_blue': HexColor('#A1C4FD'),     # Light blue from gradient
+        'light_purple': HexColor('#C2E9FB'),   # Light purple from gradient
+        'light_grey': HexColor('#f8f9fa'),     # Light background
+        'border': HexColor('#e9ecef'),         # Border color
+        'white': HexColor('#ffffff')           # White
     }
     
-    def __init__(self, title: str = "Travel Itinerary", author: str = "WanderFlow"):
+    def __init__(self, title: str = "WanderFlow Travel Itinerary", author: str = "WanderFlow AI Travel Planner"):
         """
-        Initialize the PDF generator
+        Initialize the PDF generator with WanderFlow branding
         
         Args:
             title: Document title
@@ -50,6 +55,36 @@ class PDFGenerator:
         self.created_date = datetime.now()
         self.styles = self._create_styles()
     
+    def _remove_markdown_formatting(self, text: str) -> str:
+        """Remove markdown formatting from text"""
+        if not text:
+            return text
+            
+        # Remove bold (**text** and __text__)
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+        text = re.sub(r'__(.*?)__', r'\1', text)
+        
+        # Remove italic (*text* and _text_)
+        text = re.sub(r'\*(.*?)\*', r'\1', text)
+        text = re.sub(r'(?<!\w)_([^_\s].*?[^_\s])_(?!\w)', r'\1', text)
+        
+        # Remove code (`text`)
+        text = re.sub(r'`(.*?)`', r'\1', text)
+        
+        # Remove strikethrough (~~text~~)
+        text = re.sub(r'~~(.*?)~~', r'\1', text)
+        
+        # Remove headers (# ## ### etc.)
+        text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
+        
+        # Remove links but keep text [text](url) -> text
+        text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+        
+        # Remove extra whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        return text
+
     def _create_styles(self) -> Dict[str, ParagraphStyle]:
         """Create custom paragraph styles"""
         styles = getSampleStyleSheet()
@@ -58,10 +93,21 @@ class PDFGenerator:
             'title': ParagraphStyle(
                 'CustomTitle',
                 parent=styles['Heading1'],
-                fontSize=28,
+                fontSize=24,
                 textColor=self.COLORS['primary'],
-                spaceAfter=30,
-                spaceBefore=20,
+                spaceAfter=20,
+                spaceBefore=10,
+                alignment=TA_CENTER,
+                fontName='Helvetica-Bold'
+            ),
+            
+            'brand_title': ParagraphStyle(
+                'BrandTitle',
+                parent=styles['Heading1'],
+                fontSize=18,
+                textColor=self.COLORS['secondary'],
+                spaceAfter=15,
+                spaceBefore=5,
                 alignment=TA_CENTER,
                 fontName='Helvetica-Bold'
             ),
@@ -69,19 +115,33 @@ class PDFGenerator:
             'subtitle': ParagraphStyle(
                 'CustomSubtitle',
                 parent=styles['Heading2'],
-                fontSize=18,
-                textColor=self.COLORS['secondary'],
-                spaceAfter=20,
-                spaceBefore=15,
+                fontSize=14,
+                textColor=self.COLORS['text'],
+                spaceAfter=15,
+                spaceBefore=10,
                 alignment=TA_CENTER,
                 fontName='Helvetica-Bold'
+            ),
+            
+            'section_header': ParagraphStyle(
+                'SectionHeader',
+                parent=styles['Heading2'],
+                fontSize=16,
+                textColor=self.COLORS['primary'],
+                spaceAfter=15,
+                spaceBefore=20,
+                alignment=TA_LEFT,
+                fontName='Helvetica-Bold',
+                borderWidth=0,
+                borderColor=self.COLORS['primary'],
+                borderPadding=8
             ),
             
             'heading': ParagraphStyle(
                 'CustomHeading',
                 parent=styles['Heading3'],
-                fontSize=14,
-                textColor=self.COLORS['primary'],
+                fontSize=12,
+                textColor=self.COLORS['secondary'],
                 spaceAfter=12,
                 spaceBefore=15,
                 fontName='Helvetica-Bold',
@@ -91,11 +151,12 @@ class PDFGenerator:
             'body': ParagraphStyle(
                 'CustomBody',
                 parent=styles['Normal'],
-                fontSize=11,
-                leading=16,
+                fontSize=10,
+                leading=14,
                 spaceAfter=8,
                 alignment=TA_JUSTIFY,
                 fontName='Helvetica',
+                textColor=self.COLORS['text'],
                 leftIndent=15,
                 rightIndent=15
             ),
@@ -103,12 +164,16 @@ class PDFGenerator:
             'highlight': ParagraphStyle(
                 'CustomHighlight',
                 parent=styles['Normal'],
-                fontSize=12,
-                leading=16,
+                fontSize=10,
+                leading=14,
                 spaceAfter=10,
                 fontName='Helvetica-Bold',
                 textColor=self.COLORS['accent'],
-                leftIndent=20
+                leftIndent=20,
+                backColor=self.COLORS['light_grey'],
+                borderWidth=1,
+                borderColor=self.COLORS['accent'],
+                borderPadding=6
             ),
             
             'footer': ParagraphStyle(
@@ -118,6 +183,15 @@ class PDFGenerator:
                 textColor=grey,
                 alignment=TA_CENTER,
                 fontName='Helvetica-Oblique'
+            ),
+            
+            'brand_footer': ParagraphStyle(
+                'BrandFooter',
+                parent=styles['Normal'],
+                fontSize=10,
+                textColor=self.COLORS['primary'],
+                alignment=TA_CENTER,
+                fontName='Helvetica-Bold'
             )
         }
         
@@ -168,10 +242,12 @@ class PDFGenerator:
                 story.extend(self._create_preferences_section(user_preferences))
             
             # Add main itinerary content
+            itinerary_text = self._remove_markdown_formatting(itinerary_text)
             story.extend(self._create_itinerary_section(itinerary_text))
             
             # Add additional information section if provided
             if extra_info:
+                extra_info = self._remove_markdown_formatting(extra_info)
                 story.extend(self._create_additional_info_section(extra_info))
             
             # Add footer information
@@ -188,40 +264,58 @@ class PDFGenerator:
             raise Exception(f"Error creating PDF: {str(e)}")
     
     def _create_header(self, destination: Optional[str], duration: Optional[int]) -> List:
-        """Create the PDF header section"""
+        """Create the enhanced PDF header section with WanderFlow branding"""
         story = []
         
-        # Main title
-        story.append(Paragraph("🌍 Your Travel Itinerary", self.styles['title']))
+        # WanderFlow brand header
+        story.append(Paragraph("WanderFlow", self.styles['brand_title']))
+        story.append(Paragraph("Your AI-Powered Travel Planner", self.styles['footer']))
+        story.append(Spacer(1, 20))
+        
+        # Decorative line
+        story.append(Paragraph("─" * 60, self.styles['footer']))
         story.append(Spacer(1, 15))
         
-        # Subtitle with destination and duration
-        subtitle_parts = []
-        if destination:
-            subtitle_parts.append(f"Destination: {destination}")
-        if duration:
-            subtitle_parts.append(f"Duration: {duration} days")
+        # Main title
+        story.append(Paragraph("Your Personalized Travel Itinerary", self.styles['title']))
+        story.append(Spacer(1, 10))
         
-        if subtitle_parts:
-            subtitle = " | ".join(subtitle_parts)
-            story.append(Paragraph(subtitle, self.styles['subtitle']))
+        # Trip details in a nice format
+        if destination or duration:
+            details = []
+            if destination:
+                details.append(f"<b>Destination:</b> {destination}")
+            if duration:
+                details.append(f"<b>Duration:</b> {duration} day{'s' if duration != 1 else ''}")
+            
+            if details:
+                for detail in details:
+                    story.append(Paragraph(detail, self.styles['subtitle']))
+                    story.append(Spacer(1, 5))
         
-        # Generation date
-        date_str = self.created_date.strftime("%B %d, %Y")
+        # Generation info
+        date_str = self.created_date.strftime("%B %d, %Y at %H:%M")
+        story.append(Spacer(1, 10))
         story.append(Paragraph(f"Generated on {date_str}", self.styles['footer']))
-        story.append(Spacer(1, 30))
+        story.append(Spacer(1, 25))
         
         return story
     
     def _create_preferences_section(self, preferences: Dict[str, Any]) -> List:
-        """Create the user preferences section"""
+        """Create the enhanced user preferences section"""
         story = []
         
-        story.append(Paragraph("📋 Your Travel Preferences", self.styles['heading']))
+        story.append(Paragraph("Your Travel Preferences", self.styles['section_header']))
         story.append(Spacer(1, 10))
         
-        # Create preferences table
+        # Create preferences in a more visual format
         pref_data = []
+        
+        # Add header row
+        pref_data.append([
+            Paragraph("<b>Preference</b>", self.styles['heading']),
+            Paragraph("<b>Your Choice</b>", self.styles['heading'])
+        ])
         
         for key, value in preferences.items():
             if isinstance(value, list):
@@ -230,138 +324,204 @@ class PDFGenerator:
                 value_str = str(value)
             
             pref_data.append([
-                Paragraph(f"<b>{key.replace('_', ' ').title()}:</b>", self.styles['body']),
+                Paragraph(f"<b>{key.replace('_', ' ').title()}</b>", self.styles['body']),
                 Paragraph(value_str, self.styles['body'])
             ])
         
-        if pref_data:
-            pref_table = Table(pref_data, colWidths=[40*mm, 120*mm])
+        if len(pref_data) > 1:  # More than just header
+            pref_table = Table(pref_data, colWidths=[45*mm, 115*mm])
             pref_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, -1), self.COLORS['light_grey']),
+                # Header row styling
+                ('BACKGROUND', (0, 0), (-1, 0), self.COLORS['primary']),
+                ('TEXTCOLOR', (0, 0), (-1, 0), self.COLORS['white']),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                # Data rows styling
+                ('BACKGROUND', (0, 1), (-1, -1), self.COLORS['light_grey']),
                 ('GRID', (0, 0), (-1, -1), 1, self.COLORS['border']),
-                ('PADDING', (0, 0), (-1, -1), 8),
+                ('PADDING', (0, 0), (-1, -1), 10),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, -1), 10),
+                # Alternating row colors
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [self.COLORS['light_grey'], self.COLORS['white']]),
             ]))
             
             story.append(pref_table)
-            story.append(Spacer(1, 20))
+            story.append(Spacer(1, 25))
         
         return story
     
     def _create_itinerary_section(self, itinerary_text: str) -> List:
-        """Create the main itinerary content section"""
+        """Create the enhanced main itinerary content section"""
         story = []
         
-        story.append(Paragraph("🗺️ Your Detailed Itinerary", self.styles['heading']))
+        story.append(Paragraph("Your Detailed Travel Plan", self.styles['section_header']))
         story.append(Spacer(1, 15))
         
-        # Process the itinerary text
-        paragraphs = itinerary_text.split('\n')
+        # Process the itinerary text and remove markdown formatting
+        clean_itinerary = self._remove_markdown_formatting(itinerary_text)
+        paragraphs = clean_itinerary.split('\n')
         
         for paragraph in paragraphs:
             if not paragraph.strip():
                 continue
                 
             # Check if it's a day header (starts with "Day" or contains "Day")
-            if paragraph.strip().lower().startswith('day') or 'day' in paragraph.lower()[:10]:
-                story.append(Spacer(1, 10))
-                story.append(Paragraph(f"📅 {paragraph.strip()}", self.styles['highlight']))
+            if paragraph.strip().lower().startswith('day') or 'day' in paragraph.lower()[:15]:
+                # Add extra space before each day for better readability
+                story.append(Spacer(1, 25))
+                # Enhanced day header with background (no emoji)
+                day_text = paragraph.strip()
+                story.append(Paragraph(f"{day_text}", self.styles['highlight']))
+                story.append(Spacer(1, 12))
+            elif any(keyword in paragraph.lower() for keyword in ['morning', 'afternoon', 'evening', 'night']):
+                # Time of day headers (no emoji)
+                story.append(Spacer(1, 8))
+                story.append(Paragraph(f"{paragraph.strip()}", self.styles['heading']))
                 story.append(Spacer(1, 5))
             else:
-                # Regular paragraph
-                story.append(Paragraph(paragraph.strip(), self.styles['body']))
+                # Regular paragraph with better formatting
+                formatted_text = paragraph.strip()
+                # Add bullet points for lists
+                if formatted_text.startswith('-') or formatted_text.startswith('•'):
+                    formatted_text = f"  • {formatted_text[1:].strip()}"
+                story.append(Paragraph(formatted_text, self.styles['body']))
         
         return story
     
     def _create_additional_info_section(self, extra_info: str) -> List:
-        """Create the additional information section"""
+        """Create the enhanced additional information section"""
         story = []
         
-        story.append(Spacer(1, 20))
-        story.append(Paragraph("ℹ️ Additional Travel Information", self.styles['heading']))
+        story.append(Spacer(1, 25))
+        story.append(Paragraph("Additional Travel Information", self.styles['section_header']))
         story.append(Spacer(1, 15))
         
-        # Process the additional information text
-        paragraphs = extra_info.split('\n')
+        # Process the additional information text and remove markdown formatting
+        clean_extra_info = self._remove_markdown_formatting(extra_info)
+        paragraphs = clean_extra_info.split('\n')
         
         for paragraph in paragraphs:
             if not paragraph.strip():
                 continue
                 
             # Check if it's a section header
-            if any(keyword in paragraph.lower() for keyword in ['documents', 'vaccination', 'weather', 'dining', 'attractions', 'booking']):
-                story.append(Spacer(1, 10))
-                story.append(Paragraph(f"📌 {paragraph.strip()}", self.styles['highlight']))
-                story.append(Spacer(1, 5))
+            if any(keyword in paragraph.lower() for keyword in ['documents', 'vaccination', 'weather', 'dining', 'attractions', 'booking', 'transportation', 'accommodation']):
+                story.append(Spacer(1, 12))
+                # No emoji, just header styling
+                story.append(Paragraph(f"{paragraph.strip()}", self.styles['highlight']))
+                story.append(Spacer(1, 8))
             else:
                 # Regular paragraph
-                story.append(Paragraph(paragraph.strip(), self.styles['body']))
+                formatted_text = paragraph.strip()
+                if formatted_text.startswith('-') or formatted_text.startswith('•'):
+                    formatted_text = f"  • {formatted_text[1:].strip()}"
+                story.append(Paragraph(formatted_text, self.styles['body']))
         
         return story
     
     def _create_footer_section(self) -> List:
-        """Create the footer section"""
+        """Create the enhanced footer section with WanderFlow branding"""
         story = []
         
         story.append(Spacer(1, 30))
-        story.append(Paragraph("─" * 50, self.styles['footer']))
-        story.append(Spacer(1, 15))
+        story.append(Paragraph("─" * 60, self.styles['footer']))
+        story.append(Spacer(1, 20))
         
-        # Travel tips
-        story.append(Paragraph("✈️ Travel Tips", self.styles['heading']))
+        # Enhanced travel tips section
+        story.append(Paragraph("Essential Travel Tips", self.styles['section_header']))
+        story.append(Spacer(1, 10))
         
         tips = [
-            "• Check visa requirements and passport validity before traveling",
-            "• Consider travel insurance for peace of mind",
-            "• Keep digital and physical copies of important documents",
-            "• Research local customs and cultural etiquette",
-            "• Download offline maps and translation apps",
-            "• Pack according to weather and planned activities"
+            "Check visa requirements and passport validity (6+ months) before traveling",
+            "Consider comprehensive travel insurance for peace of mind",
+            "Keep digital and physical copies of important documents in separate locations",
+            "Research local customs, cultural etiquette, and basic phrases",
+            "Download offline maps, translation apps, and emergency contact info",
+            "Pack according to weather forecasts and planned activities",
+            "Notify your bank of travel plans and research local payment methods",
+            "Check if any vaccinations are required for your destination"
         ]
         
         for tip in tips:
             story.append(Paragraph(tip, self.styles['body']))
+            story.append(Spacer(1, 3))
         
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 25))
         
-        # Powered by
+        # Enhanced WanderFlow branding footer
+        story.append(Paragraph("─" * 60, self.styles['footer']))
+        story.append(Spacer(1, 15))
+        
         story.append(Paragraph(
-            "Generated with ❤️ by <b>WanderFlow</b> - Your AI Travel Planner",
+            "<b>WanderFlow</b> - Your AI-Powered Travel Companion",
+            self.styles['brand_footer']
+        ))
+        story.append(Spacer(1, 5))
+        story.append(Paragraph(
+            "Making every journey unforgettable with personalized AI recommendations",
+            self.styles['footer']
+        ))
+        story.append(Spacer(1, 10))
+        story.append(Paragraph(
+            f"Generated on {self.created_date.strftime('%B %d, %Y')} | Safe travels!",
             self.styles['footer']
         ))
         
         return story
     
     def _add_page_decoration(self, canvas_obj, doc):
-        """Add decorative elements to each page"""
-        # Add header line
+        """Add enhanced decorative elements to each page with WanderFlow branding"""
+        # Enhanced header with gradient-like effect
         canvas_obj.setStrokeColor(self.COLORS['primary'])
-        canvas_obj.setLineWidth(2)
-        canvas_obj.line(30*mm, A4[1] - 20*mm, A4[0] - 30*mm, A4[1] - 20*mm)
+        canvas_obj.setLineWidth(3)
+        canvas_obj.line(30*mm, A4[1] - 15*mm, A4[0] - 30*mm, A4[1] - 15*mm)
         
-        # Add footer line
+        # Secondary line
+        canvas_obj.setStrokeColor(self.COLORS['secondary'])
+        canvas_obj.setLineWidth(1)
+        canvas_obj.line(30*mm, A4[1] - 17*mm, A4[0] - 30*mm, A4[1] - 17*mm)
+        
+        # Enhanced footer with multiple lines
+        canvas_obj.setStrokeColor(self.COLORS['secondary'])
+        canvas_obj.setLineWidth(1)
+        canvas_obj.line(30*mm, 22*mm, A4[0] - 30*mm, 22*mm)
+        
+        canvas_obj.setStrokeColor(self.COLORS['primary'])
+        canvas_obj.setLineWidth(3)
         canvas_obj.line(30*mm, 20*mm, A4[0] - 30*mm, 20*mm)
         
-        # Add page number
-        canvas_obj.setFont('Helvetica', 9)
-        canvas_obj.setFillColor(grey)
+        # Page number with better styling
+        canvas_obj.setFont('Helvetica-Bold', 10)
+        canvas_obj.setFillColor(self.COLORS['primary'])
         page_num = canvas_obj.getPageNumber()
-        canvas_obj.drawRightString(A4[0] - 30*mm, 15*mm, f"Page {page_num}")
+        canvas_obj.drawRightString(A4[0] - 30*mm, 12*mm, f"Page {page_num}")
         
-        # Add watermark
+        # WanderFlow branding in footer
+        canvas_obj.setFont('Helvetica', 8)
+        canvas_obj.setFillColor(self.COLORS['secondary'])
+        canvas_obj.drawString(30*mm, 12*mm, "WanderFlow - AI Travel Planner")
+        
+        # Enhanced watermark with better positioning
         canvas_obj.saveState()
-        canvas_obj.setFont('Helvetica-Bold', 40)
-        canvas_obj.setFillColor(self.COLORS['light_grey'])
+        canvas_obj.setFont('Helvetica-Bold', 35)
+        canvas_obj.setFillColor(HexColor('#f0f0f0'))  # Very light gray
         canvas_obj.rotate(45)
-        canvas_obj.drawCentredString(300, -200, "WanderFlow")
+        # Position watermark in center
+        canvas_obj.drawCentredString(300, -150, "WanderFlow")
         canvas_obj.restoreState()
+        
+        # Small decorative elements in corners
+        canvas_obj.setFillColor(self.COLORS['light_blue'])
+        # Top left corner decoration
+        canvas_obj.circle(35*mm, A4[1] - 25*mm, 2*mm, fill=1)
+        # Bottom right corner decoration  
+        canvas_obj.setFillColor(self.COLORS['secondary'])
+        canvas_obj.circle(A4[0] - 35*mm, 30*mm, 2*mm, fill=1)
     
     @staticmethod
     def create_simple_pdf(text: str, filename: Optional[str] = None) -> BytesIO:
         """
-        Create a simple PDF with basic formatting
+        Create a simple PDF with WanderFlow branding and basic formatting
         
         Args:
             text: Text content to include
@@ -370,7 +530,7 @@ class PDFGenerator:
         Returns:
             BytesIO buffer containing the PDF
         """
-        generator = PDFGenerator(title=filename or "Travel Document")
+        generator = PDFGenerator(title=filename or "WanderFlow Travel Document")
         return generator.create_itinerary_pdf(text)
     
     @staticmethod
@@ -378,7 +538,7 @@ class PDFGenerator:
                           user_data: Optional[Dict[str, Any]] = None,
                           extra_info: Optional[str] = None) -> BytesIO:
         """
-        Create an enhanced PDF with full formatting (backward compatibility)
+        Create an enhanced PDF with full WanderFlow branding and formatting
         
         Args:
             itinerary_text: The itinerary content
@@ -386,7 +546,7 @@ class PDFGenerator:
             extra_info: Optional additional travel information
             
         Returns:
-            BytesIO buffer containing the PDF
+            BytesIO buffer containing the enhanced WanderFlow PDF
         """
         generator = PDFGenerator()
         

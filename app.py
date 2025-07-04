@@ -201,7 +201,7 @@ def show_preferences_form():
             return
 
         # Ora il paese selezionato lo usi direttamente qui, senza dipendere da SessionState
-        preferences = [period.isoformat()]
+        preferences = [period.strftime("%d/%m/%Y")]
         preferences.extend(selected_destinations)
         if selected_country:
             preferences.append(selected_country)
