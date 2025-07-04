@@ -56,7 +56,7 @@ class PDFGenerator:
         self.styles = self._create_styles()
     
     def _remove_markdown_formatting(self, text: str) -> str:
-        """Remove markdown formatting from text"""
+        """Remove markdown formatting from text while preserving line breaks"""
         if not text:
             return text
             
@@ -80,8 +80,11 @@ class PDFGenerator:
         # Remove links but keep text [text](url) -> text
         text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
         
-        # Remove extra whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
+        # Clean up extra whitespace but preserve line breaks
+        # Replace multiple spaces/tabs with single space, but keep newlines
+        text = re.sub(r'[ \t]+', ' ', text)  # Multiple spaces/tabs -> single space
+        text = re.sub(r'\n\s*\n', '\n\n', text)  # Multiple empty lines -> double newline
+        text = text.strip()
         
         return text
 

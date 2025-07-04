@@ -372,7 +372,7 @@ def show_selected_itinerary():
         st.download_button(
             label="📄 Download PDF Itinerary",
             data=pdf_buffer,
-            file_name=f"itinerary_{uuid.uuid4().hex[:8]}.pdf",
+            file_name=f"WanderFlow_itinerary_{uuid.uuid4().hex[:8]}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
@@ -405,7 +405,7 @@ def show_single_itinerary_results():
             st.download_button(
                 label="📄 Download PDF Itinerary",
                 data=pdf_buffer,
-                file_name=f"itinerary_{uuid.uuid4().hex[:8]}.pdf",
+                file_name=f"WanderFlow_itinerary_{uuid.uuid4().hex[:8]}.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
@@ -565,9 +565,6 @@ def show_final_buttons():
 def show_completion_screen():
     """Mostra la schermata di completamento e ringraziamento"""
     SessionState.set_step(3)
-    
-    # Mostra la celebrazione statica
-    UIComponents.show_travel_celebration()
     
     st.markdown('<div class="custom-form-container">', unsafe_allow_html=True)
     
