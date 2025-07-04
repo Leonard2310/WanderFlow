@@ -111,9 +111,9 @@ class WorkflowManager:
     
     def cache_task(self, ref_name: str, state_key: str):
         """Cache a task ID in session state - stessa logica del codice originale"""
-        if SessionState.get(state_key) is None and SessionState.get("workflow_id"):
+        if SessionState.get("workflow_id"):
             task = self.fetch_task_by_ref(SessionState.get("workflow_id"), ref_name)
-            if task:
+            if task and SessionState.get(state_key) != task.task_id:
                 SessionState.set(state_key, task.task_id)
     
     def wait_for_task_to_be_available(self, wf_id: str, ref_name: str, timeout: int = 30) -> Optional[str]:
