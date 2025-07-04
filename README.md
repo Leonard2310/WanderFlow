@@ -95,7 +95,7 @@ TripMatch BPA follows a modular, service-oriented architecture designed for scal
 
 ### Workflow Architecture
 
-TODO: --
+![TripMatch_BPA](https://github.com/user-attachments/assets/4c3cc777-70c7-44fe-bd91-0dd792c9ca74)
 
 ## Setup & Usage
 
