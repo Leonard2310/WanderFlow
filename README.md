@@ -1,14 +1,12 @@
 # 🌍 TripMatch BPA - Intelligent Travel Planning System
 
-![TripMatch Banner](https://github.com/user-attachments/assets/placeholder-banner-image)
-
 The digital transformation of travel planning has created new opportunities for **intelligent automation** and **personalized user experiences**. As travelers increasingly demand customized itineraries that match their specific preferences, duration, and destination choices, traditional static planning tools fall short. **TripMatch BPA** addresses this gap by implementing a **Business Process Automation (BPA)** solution that seamlessly integrates workflow orchestration with interactive user interfaces.
 
 **TripMatch BPA** is a sophisticated travel planning platform that leverages **Orkes Conductor** for workflow orchestration and **Streamlit** for dynamic user interaction. The system intelligently adapts to trip duration—offering **three curated city options for short trips (≤3 days)** and **comprehensive regional itineraries for longer journeys (≥5 days)**. Through its modular architecture, the platform handles complex decision trees, user preferences, and real-time task management while providing an intuitive, map-integrated interface.
 
 The platform addresses the challenge of **dynamic workflow routing** based on user input, implementing conditional logic that determines whether travelers receive multiple city options or a single comprehensive itinerary. This intelligent bifurcation ensures optimal user experience while maintaining workflow efficiency and scalability across different travel scenarios.
 
-## ✨ Features
+## Features
 
 - **🔄 Intelligent Workflow Orchestration** using Orkes Conductor
 - **🗺️ Interactive Map Integration** with country selection and visualization
