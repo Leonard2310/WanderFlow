@@ -189,16 +189,18 @@ class PDFGenerator:
             'highlight': ParagraphStyle(
                 'CustomHighlight',
                 parent=styles['Normal'],
-                fontSize=10,
-                leading=14,
-                spaceAfter=10,
+                fontSize=11,
+                leading=16,
+                spaceAfter=12,
                 fontName='Helvetica-Bold',
-                textColor=self.COLORS['accent'],
-                leftIndent=20,
-                backColor=self.COLORS['light_grey'],
-                borderWidth=1,
+                textColor=white,
+                leftIndent=15,
+                rightIndent=15,
+                backColor=self.COLORS['accent'],
+                borderWidth=2,
                 borderColor=self.COLORS['accent'],
-                borderPadding=6
+                borderPadding=8,
+                spaceBefore=5
             ),
             
             'footer': ParagraphStyle(
@@ -430,26 +432,94 @@ class PDFGenerator:
         for paragraph in paragraphs:
             if not paragraph.strip():
                 continue
+            
+            # Clean up the paragraph
+            cleaned_paragraph = paragraph.strip()
                 
-            # Check if it's a day header (starts with "Day" or contains "Day")
-            if paragraph.strip().lower().startswith('day') or 'day' in paragraph.lower()[:15]:
+            # Enhanced day detection with multiple patterns
+            paragraph_lower = cleaned_paragraph.lower()
+            is_day_header = (
+                paragraph_lower.startswith('day ') or 
+                paragraph_lower.startswith('day') or
+                ' day ' in paragraph_lower[:20] or
+                paragraph_lower.startswith('giorno ') or
+                paragraph_lower.startswith('jour ') or
+                # Match patterns like "Day 1 -" or "Day 2:" or just "Day 2"
+                any(f'day {i}' in paragraph_lower[:15] for i in range(1, 31)) or
+                # Match date patterns like "04/07/2025"
+                re.match(r'^.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*$', paragraph_lower) or
+                # Match ordinal patterns like "1st day", "2nd day", etc.
+                re.match(r'^\s*\d+(st|nd|rd|th)\s+day', paragraph_lower) or
+                # Match patterns like "Day One", "Day Two", etc.
+                any(f'day {word}' in paragraph_lower for word in ['one', 'two', 'three', 'four', 'five', 'six', 'seven']) or
+                # Match standalone day numbers at start of line
+                re.match(r'^\s*\d+\s*[-:]\s*', cleaned_paragraph)
+            )
+            
+            # Enhanced activity detection - more selective patterns
+            is_activity_header = (
+                # Strong keyword-based detection (tourism-specific)
+                any(keyword in paragraph_lower for keyword in [
+                    'full-day', 'half-day', 'tour', 'excursion', 'boat tour',
+                    'city centre', 'city center', 'centro città'
+                ]) or
+                # Activity verbs at start of line (tourist activities)
+                any(paragraph_lower.startswith(verb) for verb in [
+                    'explore', 'visit', 'discover', 'walk through', 'stroll',
+                    'climb', 'enjoy', 'experience', 'take a tour', 'see'
+                ]) or
+                # Famous landmarks and attractions (short, proper nouns)
+                (len(cleaned_paragraph.split()) <= 4 and 
+                 len(cleaned_paragraph) < 50 and
+                 any(word[0].isupper() for word in cleaned_paragraph.split() if word and len(word) > 2) and
+                 not cleaned_paragraph.endswith('.') and
+                 not cleaned_paragraph.startswith('  ') and
+                 len(cleaned_paragraph) > 8 and
+                 # Must contain landmark keywords or be very short and proper
+                 (any(landmark in paragraph_lower for landmark in [
+                     'square', 'plaza', 'piazza', 'cathedral', 'duomo', 'basilica',
+                     'church', 'museum', 'palace', 'castello', 'bridge', 'ponte',
+                     'gallery', 'market', 'park', 'garden', 'beach', 'grotto'
+                 ]) or len(cleaned_paragraph.split()) <= 3)) or
+                # Very short proper noun phrases (likely place names)
+                (len(cleaned_paragraph.split()) <= 3 and 
+                 len(cleaned_paragraph) < 40 and
+                 all(word[0].isupper() for word in cleaned_paragraph.split() if word.isalpha()) and
+                 not cleaned_paragraph.endswith('.') and
+                 len(cleaned_paragraph) > 5)
+            )
+            
+            if is_day_header:
                 # Add extra space before each day for better readability
                 story.append(Spacer(1, 25))
-                # Enhanced day header with background (no emoji)
-                day_text = paragraph.strip()
-                story.append(Paragraph(f"{day_text}", self.styles['highlight']))
+                # Enhanced day header with consistent background styling
+                day_text = cleaned_paragraph
+                # Clean up any extra formatting
+                day_text = re.sub(r'^[-•\s]*', '', day_text)  # Remove leading bullets/dashes
+                story.append(Paragraph(f"<b>{day_text}</b>", self.styles['highlight']))
                 story.append(Spacer(1, 12))
-            elif any(keyword in paragraph.lower() for keyword in ['morning', 'afternoon', 'evening', 'night']):
-                # Time of day headers (no emoji)
+            elif any(keyword in paragraph_lower for keyword in ['morning', 'afternoon', 'evening', 'night', 'mattina', 'pomeriggio', 'sera', 'notte']):
+                # Time of day headers
                 story.append(Spacer(1, 8))
-                story.append(Paragraph(f"{paragraph.strip()}", self.styles['heading']))
+                story.append(Paragraph(f"<b>{cleaned_paragraph}</b>", self.styles['heading']))
                 story.append(Spacer(1, 5))
+            elif is_activity_header:
+                # Activity headers - also get highlight style for consistency
+                story.append(Spacer(1, 8))
+                activity_text = cleaned_paragraph
+                # Clean up any extra formatting
+                activity_text = re.sub(r'^[-•\s]*', '', activity_text)
+                story.append(Paragraph(f"<b>{activity_text}</b>", self.styles['highlight']))
+                story.append(Spacer(1, 8))
             else:
                 # Regular paragraph with better formatting
-                formatted_text = paragraph.strip()
+                formatted_text = cleaned_paragraph
                 # Add bullet points for lists
                 if formatted_text.startswith('-') or formatted_text.startswith('•'):
                     formatted_text = f"  • {formatted_text[1:].strip()}"
+                elif formatted_text and not formatted_text.startswith('  '):
+                    # Add slight indentation for regular content
+                    formatted_text = f"  {formatted_text}"
                 story.append(Paragraph(formatted_text, self.styles['body']))
         
         return story
