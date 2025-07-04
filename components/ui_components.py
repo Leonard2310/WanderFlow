@@ -53,14 +53,12 @@ class UIComponents:
             /* Main header */
             .main-header {
                 text-align: center;
-                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+                color: #764ba2 !important;
                 font-size: 2.5rem;
                 font-weight: bold;
                 margin-top: 0.5rem;
                 margin-bottom: 0.5rem;
+                text-shadow: 0px 2px 4px rgba(255,255,255,0.8);
             }
 
             /* Remove white container backgrounds - make transparent */
@@ -382,22 +380,25 @@ class UIComponents:
                 color: #555555 !important;
             }
 
-            /* Itinerary display - semi-transparent */
+            /* Itinerary display - transparent background to show gradient, no spacing */
             .itinerary-container {
-                background: rgba(255, 255, 255, 0.9);
-                border-radius: 20px;
-                padding: 2rem;
-                margin: 1.5rem 0;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                background: transparent !important;
+                border-radius: 0px;
+                padding: 0rem !important;
+                margin: 0rem !important;
+                box-shadow: none !important;
             }
 
-            /* Code block styling */
+            /* Code block styling - subtle background for readability, compact spacing */
             .itinerary-container pre {
-                background-color: rgba(248, 249, 250, 0.9);
+                background-color: rgba(255, 255, 255, 0.1);
                 border-radius: 10px;
-                padding: 1rem;
-                border: 1px solid rgba(224, 224, 224, 0.5);
-                color: #333333;
+                padding: 0.75rem;
+                margin: 0.25rem 0;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: #2c3e50;
+                font-weight: 500;
+                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
                 white-space: pre-wrap;
                 word-wrap: break-word;
             }
@@ -422,6 +423,35 @@ class UIComponents:
             .stApp footer p {
                 color: #2c3e50 !important;
                 text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
+            }
+
+            /* Remove any white backgrounds that might appear */
+            .stContainer,
+            .stColumn,
+            .main .block-container,
+            .element-container,
+            .stMarkdown > div {
+                background: transparent !important;
+            }
+
+            /* Ensure text elements are readable on gradient */
+            .stMarkdown h1,
+            .stMarkdown h2, 
+            .stMarkdown h3,
+            .stMarkdown h4,
+            .stMarkdown p {
+                color: #2c3e50 !important;
+                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
+            }
+
+            /* Special styling for itinerary title - darker and more prominent */
+            .stMarkdown h3:contains("Your Personalized Travel Itinerary"),
+            .stMarkdown h3[id*="personalized"],
+            h3:contains("🌟") {
+                color: #1a252f !important;
+                font-weight: bold !important;
+                text-shadow: 0px 2px 4px rgba(255,255,255,0.9);
+                font-size: 1.4rem !important;
             }
 
             /* REDUCE SPACING BETWEEN ELEMENTS - ULTRA COMPATTO */
@@ -713,13 +743,6 @@ class UIComponents:
                     st.markdown(f"**Country:** {selected_country}")
 
                 st.markdown("</div>", unsafe_allow_html=True)
-
-            st.markdown("""
-            <div class="sidebar-section-container">
-                <h3>🆘 Support</h3>
-                <p>Having issues? Contact our support team!</p>
-            </div>
-            """, unsafe_allow_html=True)
 
             if st.checkbox("🔧 Debug Mode", key="debug_mode_checkbox"):
                 debug_info = SessionState.get_debug_info()
