@@ -35,10 +35,11 @@ defaults = {
     "workflow_id": None,
     "pref_task_id": None,
     "show_task_id": None,
-    "choice_task_id": None,
+    "request_confirmation_task_id": None,
     "itinerary": None,
-    "extra_requested": False,
+    "extra_info_requested_via_yes": False,
     "extra_info": None,
+    "confirmation_response": None,
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -126,7 +127,7 @@ def build_itinerary_pdf(itinerary_text: str) -> BytesIO:
 st.sidebar.title("TripMatch 🧳")
 
 if st.sidebar.button("Avvia nuovo workflow"):
-    run = executor.execute(name="TripMatch_BPA", version=8, workflow_input={})
+    run = executor.execute(name="TripMatch_BPA", version=16, workflow_input={})
     for k in defaults:
         st.session_state[k] = defaults[k]                  # reset stato
     st.session_state.workflow_id = run.workflow_id
@@ -186,10 +187,10 @@ if st.session_state.pref_task_id and st.session_state.itinerary is None:
                       {"durata": durata, "preferences": prefs})
         st.success("Preferenze inviate ✅")
 
-        st.session_state.itinerary = wait_for_output_key(
-            st.session_state.workflow_id, "itinerary",
-            "Elaboro itinerario…"
-        )
+        st.session_state.itinerary = wait_for_itinerary_task(st.session_state.workflow_id) # wait_for_output_key(
+           # st.session_state.workflow_id, "itinerary",
+          #  "Elaboro itinerario…"
+       # )
         st.rerun()
 
 # 2️⃣  --- Itinerary display & choice ---
@@ -233,20 +234,22 @@ if st.session_state.itinerary:
             data=pdf_buffer,
             file_name=f"itinerario_{selected_idx + 1}.pdf",
             mime="application/pdf",
+            key="download_itinerary_initial"
         )
 
         if st.button("Conferma scelta"):
-            complete_task(
-                st.session_state.show_task_id,
-                "COMPLETED",
-                {
-                    "selected_itinerary_index": selected_idx,
-                    "selected_itinerary": selected_itinerary,
-                },
-            )
-            st.success("Itinerario confermato ✅")
-            st.session_state.itinerary = selected_itinerary  # keep for later
-            st.rerun()
+             if st.session_state.show_task_id:
+                complete_task(
+                    st.session_state.show_task_id,
+                    "COMPLETED",
+                    {
+                        "selected_itinerary_index": selected_idx,
+                        "selected_itinerary": selected_itinerary,
+                    },
+                )
+        st.success("Itinerario confermato ✅")
+        st.session_state.itinerary = selected_itinerary  # keep for later
+        st.rerun()
     else:
         itinerary_text = (
             itineraries if isinstance(itineraries, str) else itineraries[0] if itineraries else st.session_state.itinerary
@@ -260,6 +263,7 @@ if st.session_state.itinerary:
             data=pdf_buffer,
             file_name="itinerario.pdf",
             mime="application/pdf",
+            key="download_itinerary_single"
         )
 
         if st.button("Accetta itinerario"):
@@ -275,27 +279,51 @@ if st.session_state.itinerary:
             st.session_state.itinerary = itinerary_text
             st.rerun()
 
-# 3️⃣  --- Extra info button (only if GetUserChoice exists) ---
+# 3️⃣   --- Richiedi Conferma Info Aggiuntive tramite Streamlit ---
 
-cache_task("GetUserChoice", "choice_task_id")
-btn_disabled = st.session_state.choice_task_id is None or st.session_state.extra_requested
+# Cerca il task di Orkes che ti chiede di mostrare la richiesta.
+# Assicurati che "AskforAddInfo_ref" sia il reference name del task nel tuo workflow.
+cache_task("AskforAddInfo_ref", "request_confirmation_task_id")
 
-if st.sidebar.button("Richiedi info aggiuntive", disabled=btn_disabled):
-    correlation_id = str(uuid.uuid4())
-    complete_task(
-        st.session_state.choice_task_id,
-        "COMPLETED",
-        {"extra_request_id": correlation_id},
-    )
-    st.session_state.extra_requested = True
-    st.rerun()
+# Se il task è attivo e l'utente non ha ancora risposto a questa specifica domanda
+if st.session_state.request_confirmation_task_id and st.session_state.confirmation_response is None:
+    st.subheader("❓ Richiedere info aggiuntive?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("yes", key="confirm_yes"):
+            # Completa il task di Orkes con la risposta "Sì"
+            complete_task(
+                st.session_state.request_confirmation_task_id,
+                "COMPLETED",
+                {"user_choice": "yes"}, # Questa è la chiave che lo Switch Task in Orkes leggerà
+            )
+            st.session_state.confirmation_response = "Sì"
+            st.success("Hai scelto yes. Il workflow proseguirà.")
+            st.rerun()
+    with col2:
+        if st.button("No", key="confirm_no"):
+            # Completa il task di Orkes con la risposta "No"
+            complete_task(
+                st.session_state.request_confirmation_task_id,
+                "COMPLETED",
+                {"user_choice": "No"}, # Questa è la chiave che lo Switch Task in Orkes leggerà
+            )
+            st.session_state.confirmation_response = "No"
+            st.warning("Hai scelto No. Il workflow terminerà.")
+            st.rerun()
 
-# 4️⃣  --- Wait for extra_info ---
+# Se l'utente ha già risposto, mostra la sua scelta
+if st.session_state.confirmation_response:
+    st.info(f"La tua scelta precedente: **{st.session_state.confirmation_response}**")
 
-if st.session_state.extra_requested and not st.session_state.extra_info:
+# 4️⃣   --- Wait for extra_info (solo se l'utente ha scelto "Sì") ---
+# La logica per "extra_requested" può essere semplificata, dato che "confirmation_response" gestisce la decisione.
+# Assicurati che il task che genera "extra_info" sia a valle del tuo "caseswitch" in Orkes.
+
+if st.session_state.confirmation_response == "Sì" and not st.session_state.extra_info:
     st.session_state.extra_info = wait_for_output_key(
         st.session_state.workflow_id,
-        "extra_info",
+        "extra_info", # Questa chiave dovrebbe essere l'output del task nel tuo caseswitch
         "Recupero informazioni aggiuntive…",
     )
     st.rerun()
