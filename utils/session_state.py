@@ -17,7 +17,7 @@ class SessionState:
         "choice_travel_city_task_id": None,  # NUOVO: per ChoiceTravelCity (viaggi brevi)
         "request_confirmation_task_id": None,  # NUOVO: per AskforAddInfo_ref come nel dashboard
         "show_more_info_task_id": None,  # NUOVO: per ShowMoreInformation task
-        "confirmation_response": None,  # NUOVO: per la risposta Sì/No come nel dashboard
+        "confirmation_response": None,  # NUOVO: per la risposta Yes/No come nel dashboard
         "itinerary": None,
         "travel_options": None,  # NUOVO: per le 3 opzioni di viaggio breve
         "selected_travel_option": None,  # NUOVO: opzione selezionata dall'utente

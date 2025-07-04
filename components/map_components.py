@@ -40,9 +40,8 @@ class MapComponents:
             map_config = {
                 "location": map_center,
                 "zoom_start": map_zoom,
-                "tiles": "CartoDB Dark_Matter",
                 "prefer_canvas": True,
-                "max_zoom": 18,
+                "max_zoom": 16,  # Stamen Watercolor ha un max zoom più basso
                 "min_zoom": 2
             }
         else:
@@ -50,13 +49,21 @@ class MapComponents:
             map_config = {
                 "location": [20, 0],  # Better world center
                 "zoom_start": 2,
-                "tiles": "CartoDB Dark_Matter",
                 "prefer_canvas": True,
-                "max_zoom": 18,
+                "max_zoom": 16,  # Stamen Watercolor ha un max zoom più basso
                 "min_zoom": 1
             }
 
         m = folium.Map(**map_config)
+        
+        # Aggiungi il tile layer Stamen Watercolor con attribuzione minimale
+        folium.raster_layers.TileLayer(
+            tiles="https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg",
+            attr=".",  # Attribuzione minimale (solo un punto)
+            name="Stamen Watercolor",
+            overlay=False,
+            control=False  # Nasconde il controllo layer
+        ).add_to(m)
 
         countries_gdf = MapComponents.load_countries_geojson()
         if countries_gdf is None:

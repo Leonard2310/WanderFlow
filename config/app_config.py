@@ -15,7 +15,7 @@ class AppConfig:
     APP_ICON = "🌍"
 
     # Workflow configuration
-    WORKFLOW_NAME = "TripMatch_BPA"
+    WORKFLOW_NAME = "WanderFlow"
     WORKFLOW_VERSION = 26
 
     # UI Configuration

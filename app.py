@@ -506,7 +506,7 @@ def show_additional_info_options():
 def handle_additional_info():
     """Gestisce le informazioni aggiuntive"""
     # GESTIONE INFO AGGIUNTIVE - STESSO PATTERN PER ENTRAMBI I TIPI
-    if SessionState.get("confirmation_response") == "Sì" and not SessionState.get("extra_info"):
+    if SessionState.get("confirmation_response") == "Yes" and not SessionState.get("extra_info"):
         # Le info aggiuntive vengono dal task ShowMoreInformation
         extra_info_data = workflow_manager.wait_for_additional_info_task(
             SessionState.get("workflow_id")
