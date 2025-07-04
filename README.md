@@ -339,12 +339,12 @@ We welcome contributions! Please follow these guidelines:
 4. **Update documentation** as needed
 5. **Submit a pull request** with a clear description
 
-## License
-
-This project is licensed under the [GPL-3.0 license](LICENSE). For full terms, see the LICENSE file.
-
 ## Authors
 
 * [Leonardo Catello](https://github.com/Leonard2310)
 * [Aurora D'Ambrosio](https://github.com/AuroraD-99)
 * [Luisa Ciniglio](https://github.com/LuisaCiniglio)
+
+## License
+
+This project is licensed under the [GPL-3.0 license](LICENSE). For full terms, see the LICENSE file.
