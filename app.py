@@ -510,45 +510,56 @@ def show_itinerary_actions(itinerary_text: str, use_show_task: bool = True):
         use_show_task (bool): Whether to use ShowItinerary task (True for long trips,
                              False for short trips)
     """
-    st.markdown("### 🎯 What would you like to do next?")
+    # Check if additional info is already available - if so, don't show the action buttons
+    extra_info = SessionState.get("extra_info")
     
-    # Action buttons
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Itinerary acceptance button
-        itinerary_confirmed = SessionState.get("itinerary_confirmed")
+    # Only show the action section if no additional info has been received yet
+    if not extra_info:
+        st.markdown("### 🎯 What would you like to do next?")
         
-        if itinerary_confirmed:
-            # Show confirmed state instead of button
-            st.success("✅ Itinerary Accepted!")
-            st.info("You can now request additional information if needed.")
-        elif st.button("✅ Accept This Itinerary", key="accept_itinerary", use_container_width=True):
-            if use_show_task:
-                # For long trips: use ShowItinerary task
-                workflow_manager.cache_task("ShowItinerary", "show_task_id")
-                show_task_id = SessionState.get("show_task_id")
-                if show_task_id:
-                    if workflow_manager.complete_task(show_task_id, "COMPLETED", {
-                        "selected_itinerary_index": 0,
-                        "selected_itinerary": itinerary_text
-                    }):
-                        st.success("🎉 Itinerary accepted! You can now request additional info or plan a new trip.")
-                        SessionState.set("itinerary_confirmed", True)
-                        st.rerun()
+        # Action buttons
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Itinerary acceptance button
+            itinerary_confirmed = SessionState.get("itinerary_confirmed")
+            
+            if itinerary_confirmed:
+                # Show confirmed state instead of button
+                st.success("✅ Itinerary Accepted!")
+                
+                # Only show additional info prompt if user hasn't made a choice yet
+                confirmation_response = SessionState.get("confirmation_response")
+                workflow_completed = SessionState.get("workflow_completed")
+                
+                if not confirmation_response and not workflow_completed:
+                    st.info("You can now request additional information if needed.")
+            elif st.button("✅ Accept This Itinerary", key="accept_itinerary", use_container_width=True):
+                if use_show_task:
+                    # For long trips: use ShowItinerary task
+                    workflow_manager.cache_task("ShowItinerary", "show_task_id")
+                    show_task_id = SessionState.get("show_task_id")
+                    if show_task_id:
+                        if workflow_manager.complete_task(show_task_id, "COMPLETED", {
+                            "selected_itinerary_index": 0,
+                            "selected_itinerary": itinerary_text
+                        }):
+                            st.success("🎉 Itinerary accepted! You can now request additional info or plan a new trip.")
+                            SessionState.set("itinerary_confirmed", True)
+                            st.rerun()
+                        else:
+                            st.error("❌ Error confirming itinerary.")
                     else:
-                        st.error("❌ Error confirming itinerary.")
+                        st.error("⚠️ ShowItinerary task ID not found.")
                 else:
-                    st.error("⚠️ ShowItinerary task ID not found.")
-            else:
-                # For short trips: no ShowItinerary task, just mark as confirmed
-                SessionState.set("itinerary_confirmed", True)
-                st.success("🎉 Itinerary accepted! You can now request additional info or plan a new trip.")
-                st.rerun()
-    
-    with col2:
-        # Handle additional information request
-        show_additional_info_options()
+                    # For short trips: no ShowItinerary task, just mark as confirmed
+                    SessionState.set("itinerary_confirmed", True)
+                    st.success("🎉 Itinerary accepted! You can now request additional info or plan a new trip.")
+                    st.rerun()
+        
+        with col2:
+            # Handle additional information request
+            show_additional_info_options()
     
     # Handle additional info
     handle_additional_info()
@@ -592,9 +603,12 @@ def show_additional_info_options():
                     else:
                         st.error("❌ Error declining additional info.")
         
-        # If user has already responded, show the choice
+        # If user has already responded, show the choice only if additional info isn't available yet
         elif confirmation_response:
-            st.info(f"Your choice: **{confirmation_response}**")
+            extra_info = SessionState.get("extra_info")
+            # Only show choice if no additional info has been received yet
+            if not extra_info:
+                st.info(f"Your choice: **{confirmation_response}**")
         else:
             st.info("⏳ Waiting for additional info task to become available...")
 
@@ -630,7 +644,10 @@ def handle_additional_info():
     # Display additional info if available (only for users who chose "Yes")
     if SessionState.get("extra_info"):
         st.subheader("ℹ️ Additional Information")
-        st.markdown(SessionState.get("extra_info"))
+        
+        # Process and display additional info using the same components as itinerary
+        extra_info_text = UIComponents.process_itinerary_data(SessionState.get("extra_info"))
+        UIComponents.render_itinerary_display(extra_info_text)
         
         # Cache ShowMoreInformation task to allow acceptance
         workflow_manager.cache_task("ShowMoreInformation", "show_more_info_task_id")

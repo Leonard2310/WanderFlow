@@ -405,10 +405,10 @@ class PDFGenerator:
     
     def _create_itinerary_section(self, itinerary_text: str) -> List:
         """
-        Create the enhanced main itinerary content section.
+        Create the main itinerary content section with simple formatting.
         
-        Formats the travel itinerary with intelligent parsing for days,
-        times, and activities with appropriate styling and spacing.
+        Formats the travel itinerary with consistent styling for all content,
+        without automatic detection logic that can misclassify content.
         
         Args:
             itinerary_text (str): Clean itinerary text content
@@ -431,43 +431,24 @@ class PDFGenerator:
             
             # Clean up the paragraph
             cleaned_paragraph = paragraph.strip()
-            paragraph_lower = cleaned_paragraph.lower()
             
-            # Simplified day detection
-            is_day_header = (
-                paragraph_lower.startswith('day ') or 
-                ' day ' in paragraph_lower[:20] or
-                any(f'day {i}' in paragraph_lower[:15] for i in range(1, 31)) or
-                re.match(r'^.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*$', paragraph_lower)
-            )
-            
-            # Simplified time detection
-            is_time_header = any(keyword in paragraph_lower for keyword in [
-                'morning', 'afternoon', 'evening', 'night', 'mattina', 'pomeriggio', 'sera', 'notte'
-            ])
-            
-            if is_day_header:
-                # Day headers - simple bold formatting, minimal spacing
-                day_text = re.sub(r'^[-•\s]*', '', cleaned_paragraph)
-                story.append(Paragraph(f"<b>{day_text}</b>", self.styles['highlight']))
-            elif is_time_header:
-                # Time headers - slightly smaller, minimal spacing
-                story.append(Paragraph(f"<b>{cleaned_paragraph}</b>", self.styles['heading']))
+            # Simple formatting: just format bullet points nicely
+            if cleaned_paragraph.startswith('-') or cleaned_paragraph.startswith('•'):
+                formatted_text = f"• {cleaned_paragraph[1:].strip()}"
             else:
-                # All other content as regular text, very compact
                 formatted_text = cleaned_paragraph
-                if formatted_text.startswith('-') or formatted_text.startswith('•'):
-                    formatted_text = f"• {formatted_text[1:].strip()}"
-                story.append(Paragraph(formatted_text, self.styles['body']))
+            
+            # Use consistent body style for all content
+            story.append(Paragraph(formatted_text, self.styles['body']))
         
         return story
     
     def _create_additional_info_section(self, extra_info: str) -> List:
         """
-        Create the enhanced additional information section.
+        Create the additional information section with simple formatting.
         
-        Formats supplementary travel information with intelligent parsing
-        for different information categories and appropriate styling.
+        Formats supplementary travel information with consistent styling
+        without automatic detection logic.
         
         Args:
             extra_info (str): Additional travel information text
@@ -489,18 +470,15 @@ class PDFGenerator:
             if not paragraph.strip():
                 continue
                 
-            # Check if it's a section header
-            if any(keyword in paragraph.lower() for keyword in ['documents', 'vaccination', 'weather', 'dining', 'attractions', 'booking', 'transportation', 'accommodation']):
-                story.append(Spacer(1, 12))
-                # No emoji, just header styling
-                story.append(Paragraph(f"{paragraph.strip()}", self.styles['highlight']))
-                story.append(Spacer(1, 8))
+            # Simple formatting: just format bullet points nicely
+            cleaned_paragraph = paragraph.strip()
+            if cleaned_paragraph.startswith('-') or cleaned_paragraph.startswith('•'):
+                formatted_text = f"• {cleaned_paragraph[1:].strip()}"
             else:
-                # Regular paragraph
-                formatted_text = paragraph.strip()
-                if formatted_text.startswith('-') or formatted_text.startswith('•'):
-                    formatted_text = f"  • {formatted_text[1:].strip()}"
-                story.append(Paragraph(formatted_text, self.styles['body']))
+                formatted_text = cleaned_paragraph
+            
+            # Use consistent body style for all content
+            story.append(Paragraph(formatted_text, self.styles['body']))
         
         return story
     
@@ -564,10 +542,10 @@ class PDFGenerator:
     
     def _add_page_decoration(self, canvas_obj, doc):
         """
-        Add enhanced decorative elements to each page with WanderFlow branding.
+        Add decorative elements to each page with WanderFlow branding.
         
         Applies consistent page decorations including headers, footers,
-        page numbers, watermarks, and corner decorations across all pages.
+        page numbers, and corner decorations across all pages.
         
         Args:
             canvas_obj: ReportLab canvas object for drawing
@@ -602,15 +580,6 @@ class PDFGenerator:
         canvas_obj.setFont('Helvetica', 8)
         canvas_obj.setFillColor(self.COLORS['secondary'])
         canvas_obj.drawString(30*mm, 12*mm, "WanderFlow - AI Travel Planner")
-        
-        # Enhanced watermark with better positioning
-        canvas_obj.saveState()
-        canvas_obj.setFont('Helvetica-Bold', 35)
-        canvas_obj.setFillColor(HexColor('#f0f0f0'))  # Very light gray
-        canvas_obj.rotate(45)
-        # Position watermark in center
-        canvas_obj.drawCentredString(300, -150, "WanderFlow")
-        canvas_obj.restoreState()
         
         # Small decorative elements in corners
         canvas_obj.setFillColor(self.COLORS['light_blue'])
