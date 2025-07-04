@@ -1,5 +1,5 @@
 """
-UI Components for TripMatch application - Updated with improved spacing and styling
+UI Components for WanderFlow application - Updated with improved spacing and styling
 """
 
 import streamlit as st
@@ -693,7 +693,7 @@ class UIComponents:
         with st.sidebar:
             st.markdown("""
             <div class="sidebar-section-container">
-                <h3>🌍 TripMatch</h3>
+                <h3>🌍 WanderFlow</h3>
                 <p>Your AI-powered travel planner</p>
             </div>
             """, unsafe_allow_html=True)
@@ -741,7 +741,7 @@ class UIComponents:
         st.markdown(
             """
             <div style="text-align: center; padding: 1rem 0; color: #2c3e50;">
-                <p>🌍 <strong>TripMatch</strong> - Powered by Orkes Conductor & Streamlit</p>
+                <p>🌍 <strong>WanderFlow</strong> - Powered by Orkes Conductor & Streamlit</p>
                 <p>Made with ❤️ for travelers worldwide</p>
             </div>
             """,

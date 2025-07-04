@@ -1,5 +1,5 @@
 """
-PDF Generator Module for TripMatch Application
+PDF Generator Module for WanderFlow Application
 
 This module provides functionality to generate enhanced PDF documents
 for travel itineraries with professional styling and formatting.
@@ -37,7 +37,7 @@ class PDFGenerator:
         'border': HexColor('#e9ecef')
     }
     
-    def __init__(self, title: str = "Travel Itinerary", author: str = "TripMatch"):
+    def __init__(self, title: str = "Travel Itinerary", author: str = "WanderFlow"):
         """
         Initialize the PDF generator
         
@@ -328,7 +328,7 @@ class PDFGenerator:
         
         # Powered by
         story.append(Paragraph(
-            "Generated with ❤️ by <b>TripMatch</b> - Your AI Travel Planner",
+            "Generated with ❤️ by <b>WanderFlow</b> - Your AI Travel Planner",
             self.styles['footer']
         ))
         
@@ -355,7 +355,7 @@ class PDFGenerator:
         canvas_obj.setFont('Helvetica-Bold', 40)
         canvas_obj.setFillColor(self.COLORS['light_grey'])
         canvas_obj.rotate(45)
-        canvas_obj.drawCentredString(300, -200, "TripMatch")
+        canvas_obj.drawCentredString(300, -200, "WanderFlow")
         canvas_obj.restoreState()
     
     @staticmethod

@@ -1,5 +1,5 @@
 """
-Configuration module for TripMatch application
+Configuration module for WanderFlow application
 """
 
 import os
@@ -11,7 +11,7 @@ class AppConfig:
     """Centralized configuration management"""
 
     # App constants
-    APP_TITLE = "TripMatch - Plan Your Adventure"
+    APP_TITLE = "WanderFlow - Plan Your Adventure"
     APP_ICON = "🌍"
 
     # Workflow configuration

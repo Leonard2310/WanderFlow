@@ -1,5 +1,5 @@
 """
-Map components for TripMatch application - Fixed version with conditional map display
+Map components for WanderFlow application - Fixed version with conditional map display
 """
 
 import streamlit as st

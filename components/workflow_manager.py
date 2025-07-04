@@ -1,5 +1,5 @@
 """
-Workflow management for TripMatch application
+Workflow management for WanderFlow application
 """
 
 import time

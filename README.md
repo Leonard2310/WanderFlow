@@ -1,8 +1,8 @@
-# 🌍 TripMatch BPA - AI-Powered Travel Planning System
+# 🌍 WanderFlow - AI-Powered Travel Planning System
 
-The digital transformation of travel planning has created new opportunities for **intelligent automation** and **personalized user experiences**. As travelers increasingly demand customized itineraries that match their specific preferences, duration, and destination choices, traditional static planning tools fall short. **TripMatch BPA** addresses this gap by implementing a **Business Process Automation (BPA)** solution that seamlessly integrates **AI-powered workflow orchestration** with interactive user interfaces.
+The digital transformation of travel planning has created new opportunities for **intelligent automation** and **personalized user experiences**. As travelers increasingly demand customized itineraries that match their specific preferences, duration, and destination choices, traditional static planning tools fall short. **WanderFlow** addresses this gap by implementing a **Business Process Automation (BPA)** solution that seamlessly integrates **AI-powered workflow orchestration** with interactive user interfaces.
 
-**TripMatch BPA** is a sophisticated travel planning platform that leverages **Orkes Conductor** for workflow orchestration, **Large Language Models (LLMs)** for intelligent content generation, and **Streamlit** for dynamic user interaction. The system intelligently adapts to trip duration—offering **three AI-curated city options for short trips (≤3 days)** and **comprehensive regional itineraries for longer journeys (≥5 days)**. Through its modular architecture and advanced prompt engineering, the platform handles complex decision trees, user preferences, and real-time task management while providing an intuitive, map-integrated interface.
+**WanderFlow** is a sophisticated travel planning platform that leverages **Orkes Conductor** for workflow orchestration, **Large Language Models (LLMs)** for intelligent content generation, and **Streamlit** for dynamic user interaction. The system intelligently adapts to trip duration—offering **three AI-curated city options for short trips (≤3 days)** and **comprehensive regional itineraries for longer journeys (≥5 days)**. Through its modular architecture and advanced prompt engineering, the platform handles complex decision trees, user preferences, and real-time task management while providing an intuitive, map-integrated interface.
 
 The platform addresses the challenge of **dynamic workflow routing** and **AI-driven content generation** based on user input, implementing conditional logic that determines whether travelers receive multiple city options or a single comprehensive itinerary. This intelligent bifurcation, combined with LLM-powered quality assurance, ensures optimal user experience while maintaining workflow efficiency and scalability across different travel scenarios.
 
@@ -38,7 +38,7 @@ The platform addresses the challenge of **dynamic workflow routing** and **AI-dr
 
 ## 🏗️ Architecture & Module Overview
 
-TripMatch BPA follows a **modular, AI-integrated architecture** designed for scalability, maintainability, and intelligent automation:
+WanderFlow follows a **modular, AI-integrated architecture** designed for scalability, maintainability, and intelligent automation:
 
 ### 🧩 Core Components
 
@@ -95,7 +95,7 @@ TripMatch BPA follows a **modular, AI-integrated architecture** designed for sca
 
 ![TripMatch_BPA](https://github.com/user-attachments/assets/4c3cc777-70c7-44fe-bd91-0dd792c9ca74)
 
-The **TripMatch BPA** workflow implements an intelligent decision-making system that adapts to user preferences and trip duration. The architecture features:
+The **WanderFlow** workflow implements an intelligent decision-making system that adapts to user preferences and trip duration. The architecture features:
 
 - **Smart Duration Classification**: Automatic routing based on trip length (≤3 days vs ≥5 days)
 - **Parallel AI Processing**: Simultaneous generation of multiple travel options for short trips
@@ -105,7 +105,7 @@ The **TripMatch BPA** workflow implements an intelligent decision-making system 
 
 ## 🧠 AI-Powered Workflow Engine
 
-TripMatch BPA rappresenta una soluzione all'avanguardia che combina **Large Language Models (LLMs)** con **tecniche avanzate di prompt engineering** attraverso un sofisticato workflow Orkes Conductor. Il sistema integra modelli **Mistral AI** tramite OpenRouter API per fornire una pianificazione di viaggio intelligente e contestualmente consapevole, con meccanismi integrati di garanzia della qualità.
+WanderFlow rappresenta una soluzione all'avanguardia che combina **Large Language Models (LLMs)** con **tecniche avanzate di prompt engineering** attraverso un sofisticato workflow Orkes Conductor. Il sistema integra modelli **Mistral AI** tramite OpenRouter API per fornire una pianificazione di viaggio intelligente e contestualmente consapevole, con meccanismi integrati di garanzia della qualità.
 
 ### 🤖 Integrazione LLM & Strategia di Prompt Engineering
 
@@ -220,8 +220,8 @@ Questa architettura alimentata dall'AI garantisce che ogni itinerario generato n
 
 ### 1. **Clone and Install AI Dependencies**
 ```bash
-git clone https://github.com/your-username/TripMatchBPA.git
-cd TripMatchBPA
+git clone https://github.com/your-username/WanderFlow.git
+cd WanderFlow
 
 # Create virtual environment for AI packages
 python -m venv BPA_TripMatch

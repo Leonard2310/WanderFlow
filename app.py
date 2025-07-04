@@ -25,7 +25,7 @@ from config.app_config import AppConfig
 
 # ================= CONFIGURAZIONE STREAMLIT =================
 st.set_page_config(
-    page_title="TripMatch - Plan Your Adventure",
+    page_title="WanderFlow - Plan Your Adventure",
     page_icon="🌍",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -485,7 +485,7 @@ def show_additional_info_options():
             with col_yes:
                 if st.button("Yes", key="confirm_yes_main", use_container_width=True):
                     if workflow_manager.complete_task(request_task_id, "COMPLETED", {"user_choice": "yes"}):
-                        SessionState.set("confirmation_response", "Sì")
+                        SessionState.set("confirmation_response", "Yes")
                         st.rerun()
                     else:
                         st.error("❌ Error requesting additional info.")
@@ -564,7 +564,7 @@ def show_completion_screen():
             🎉 Trip Planning Complete!
         </h1>
         <h2 style="color: #667eea; font-size: 1.8rem; margin-bottom: 2rem;">
-            Thank you for using TripMatch!
+            Thank you for using WanderFlow!
         </h2>
     </div>
     """, unsafe_allow_html=True)
@@ -598,7 +598,7 @@ def show_completion_screen():
             st.download_button(
                 label="📱 Download Your Complete Itinerary (PDF)",
                 data=pdf_buffer,
-                file_name=f"TripMatch_Itinerary_{uuid.uuid4().hex[:8]}.pdf",
+                file_name=f"WanderFlow_Itinerary_{uuid.uuid4().hex[:8]}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
                 type="primary"

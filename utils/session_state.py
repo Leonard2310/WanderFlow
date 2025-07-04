@@ -1,5 +1,5 @@
 """
-Session state management for TripMatch application
+Session state management for WanderFlow application
 """
 
 import streamlit as st
