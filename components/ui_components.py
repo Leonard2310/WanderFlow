@@ -71,21 +71,9 @@ class UIComponents:
                 border-left: none;
             }
 
-            /* All text should be readable on gradient background */
-            .section-container,
-            .section-container * {
-                color: #333333 !important;
-            }
+            /* Removed global text color forcing to allow inline styles */
 
-            /* Section headers - make them stand out on gradient */
-            .section-container h3 {
-                color: #2c3e50 !important;
-                margin-bottom: 0.5rem !important;
-                margin-top: 0.5rem !important;
-                font-size: 1.2rem !important;
-                font-weight: bold !important;
-                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
-            }
+            /* Removed section header color forcing to allow inline styles */
 
             /* Buttons */
             .stButton > button {
@@ -203,145 +191,7 @@ class UIComponents:
                 color: #000000 !important;
             }
 
-            /* IMPROVED CHECKBOX STYLING - FILLED WHEN SELECTED */
-            .stCheckbox {
-                margin-bottom: 0.05rem !important;
-                background: transparent !important;
-            }
-
-            /* Checkbox label styling */
-            .stCheckbox > label {
-                color: #2c3e50 !important;
-                font-weight: 600 !important;
-                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
-                background: transparent !important;
-                padding: 0.15rem !important;
-                border-radius: 8px !important;
-                transition: all 0.2s ease !important;
-                display: flex !important;
-                align-items: center !important;
-                gap: 0.3rem !important;
-                margin: 0 !important;
-            }
-
-            .stCheckbox > label:hover {
-                background: rgba(255, 255, 255, 0.15) !important;
-                transform: scale(1.02);
-            }
-
-            /* Checkbox input container - the actual checkbox */
-            .stCheckbox > label > div:first-child {
-                width: 20px !important;
-                height: 20px !important;
-                border: 2px solid #667eea !important;
-                border-radius: 4px !important;
-                background-color: rgba(255, 255, 255, 0.95) !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                transition: all 0.3s ease !important;
-                position: relative !important;
-                flex-shrink: 0 !important;
-            }
-
-            /* Checked box background - RIEMPIMENTO COMPLETO DELLA CHECKBOX */
-            .stCheckbox > label > input[type="checkbox"]:checked + div {
-                background-color: #667eea !important;
-                border-color: #667eea !important;
-                box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3) !important;
-            }
-
-            /* Checkmark migliorato - più piccolo e centrato */
-            .stCheckbox > label > div:first-child::after {
-                content: "✓";
-                color: white;
-                font-size: 12px;
-                font-weight: bold;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-            }
-
-            /* Show checkmark when checked */
-            .stCheckbox > label > input[type="checkbox"]:checked + div::after {
-                opacity: 1;
-            }
-
-            /* Checkbox text */
-            .stCheckbox > label > div:last-child {
-                color: #2c3e50 !important;
-                font-weight: 600 !important;
-                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
-                font-size: 0.9rem !important;
-            }
-
-            /* More specific targeting for section containers */
-            .section-container .stCheckbox {
-                background: transparent !important;
-                margin-bottom: 0.05rem !important;
-            }
-
-            .section-container .stCheckbox > label {
-                background: transparent !important;
-                padding: 0.15rem !important;
-            }
-
-            /* Target specific checkbox containers by data attributes */
-            div[data-testid="stCheckbox"] {
-                background: transparent !important;
-                margin-bottom: 0.05rem !important;
-            }
-
-            div[data-testid="stCheckbox"] > label {
-                background: transparent !important;
-                color: #2c3e50 !important;
-                font-weight: 600 !important;
-                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
-                padding: 0.15rem !important;
-                margin: 0 !important;
-            }
-
-            div[data-testid="stCheckbox"] > label > div:first-child {
-                background-color: rgba(255, 255, 255, 0.95) !important;
-                border: 2px solid #667eea !important;
-                border-radius: 4px !important;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-                width: 20px !important;
-                height: 20px !important;
-            }
-
-            /* Enhanced checkbox checked state - RIEMPIMENTO COMPLETO DELLA CHECKBOX */
-            div[data-testid="stCheckbox"] input:checked + div {
-                background-color: #667eea !important;
-                border-color: #667eea !important;
-                box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3) !important;
-            }
-
-            /* Aggiungi il checkmark anche per data-testid */
-            div[data-testid="stCheckbox"] > label > div:first-child::after {
-                content: "✓";
-                color: white;
-                font-size: 12px;
-                font-weight: bold;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-            }
-
-            div[data-testid="stCheckbox"] input:checked + div::after {
-                opacity: 1;
-            }
-
-            /* Override any Streamlit default white backgrounds on checkboxes */
-            .stCheckbox * {
-                background: transparent !important;
-            }
+            /* Checkbox styling removed to avoid conflicts with Streamlit defaults */
 
             /* Selectbox dropdown */
             div[data-baseweb="popover"] > div > ul {
@@ -434,25 +284,30 @@ class UIComponents:
                 background: transparent !important;
             }
 
-            /* Ensure text elements are readable on gradient */
-            .stMarkdown h1,
-            .stMarkdown h2, 
-            .stMarkdown h3,
-            .stMarkdown h4,
-            .stMarkdown p {
-                color: #2c3e50 !important;
-                text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
+            /* Removed global color forcing to allow inline styles to work */
+
+            /* White text for success messages and purple background elements */
+            .stSuccess,
+            .stSuccess > div,
+            .stSuccess p,
+            .stSuccess h1,
+            .stSuccess h2,
+            .stSuccess h3,
+            .stSuccess h4,
+            div[data-testid="stSuccess"],
+            div[data-testid="stSuccess"] p,
+            div[data-testid="stSuccess"] h1,
+            div[data-testid="stSuccess"] h2,
+            div[data-testid="stSuccess"] h3,
+            div[data-testid="stSuccess"] h4 {
+                color: white !important;
+                text-shadow: 0px 1px 2px rgba(0,0,0,0.3) !important;
             }
 
             /* Special styling for itinerary title - darker and more prominent */
             .stMarkdown h3:contains("Your Personalized Travel Itinerary"),
             .stMarkdown h3[id*="personalized"],
-            h3:contains("🌟") {
-                color: #1a252f !important;
-                font-weight: bold !important;
-                text-shadow: 0px 2px 4px rgba(255,255,255,0.9);
-                font-size: 1.4rem !important;
-            }
+            /* Removed specific header color forcing to allow inline styles */
 
             /* REDUCE SPACING BETWEEN ELEMENTS - ULTRA COMPATTO */
             .stMarkdown {
@@ -608,6 +463,36 @@ class UIComponents:
                 padding-left: 1rem !important;
                 border-left: 3px solid #667eea !important;
                 margin-left: 0.5rem !important;
+            }
+
+            /* COMPLETION BANNER - HIGHEST PRIORITY STYLES */
+            .completion-banner,
+            .completion-banner *,
+            .completion-banner h3,
+            .completion-banner p,
+            .completion-title,
+            .completion-text {
+                color: #FFFFFF !important;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+            }
+
+            /* Override any other styles that might interfere */
+            div.completion-banner h3.completion-title,
+            div.completion-banner p.completion-text {
+                color: #FFFFFF !important;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+            }
+
+            /* Make sure markdown inside completion banner is white */
+            .completion-banner .stMarkdown,
+            .completion-banner .stMarkdown *,
+            .completion-banner .stMarkdown h1,
+            .completion-banner .stMarkdown h2,
+            .completion-banner .stMarkdown h3,
+            .completion-banner .stMarkdown h4,
+            .completion-banner .stMarkdown p {
+                color: #FFFFFF !important;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
             }
 
         </style>

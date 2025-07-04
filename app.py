@@ -505,7 +505,19 @@ def show_additional_info_options():
 
 def handle_additional_info():
     """Gestisce le informazioni aggiuntive"""
-    # GESTIONE INFO AGGIUNTIVE - STESSO PATTERN PER ENTRAMBI I TIPI
+    
+    # Se l'utente ha scelto "No", vai direttamente alla schermata di completamento
+    if SessionState.get("confirmation_response") == "No":
+        # Vai direttamente alla schermata di completamento senza aspettare info aggiuntive
+        if not SessionState.get("workflow_completed"):
+            st.success("🎉 Trip planning completed successfully!")
+            SessionState.set_step(3)
+            SessionState.set("workflow_completed", True)
+            time.sleep(1)
+            st.rerun()
+        return
+    
+    # GESTIONE INFO AGGIUNTIVE - SOLO PER CHI HA SCELTO "YES"
     if SessionState.get("confirmation_response") == "Yes" and not SessionState.get("extra_info"):
         # Le info aggiuntive vengono dal task ShowMoreInformation
         extra_info_data = workflow_manager.wait_for_additional_info_task(
@@ -515,7 +527,7 @@ def handle_additional_info():
             SessionState.set("extra_info", extra_info_data)
             st.rerun()
     
-    # Mostra info aggiuntive se disponibili
+    # Mostra info aggiuntive se disponibili (solo per chi ha scelto "Yes")
     if SessionState.get("extra_info"):
         st.subheader("ℹ️ Informazioni aggiuntive")
         st.markdown(SessionState.get("extra_info"))
@@ -536,7 +548,6 @@ def handle_additional_info():
                 # Vai direttamente alla schermata di completamento
                 SessionState.set_step(3)
                 SessionState.set("workflow_completed", True)
-                st.balloons()
                 st.rerun()
             else:
                 st.error("❌ Error confirming additional information.")
@@ -555,6 +566,9 @@ def show_completion_screen():
     """Mostra la schermata di completamento e ringraziamento"""
     SessionState.set_step(3)
     
+    # Mostra la celebrazione statica
+    UIComponents.show_travel_celebration()
+    
     st.markdown('<div class="custom-form-container">', unsafe_allow_html=True)
     
     # Header di completamento
@@ -571,14 +585,14 @@ def show_completion_screen():
     
     # Messaggio di ringraziamento
     st.markdown("""
-    <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                padding: 2rem; border-radius: 15px; color: white; margin: 2rem 0;">
-        <h3 style="margin-bottom: 1rem;">✈️ Your adventure awaits!</h3>
-        <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+    <div class="completion-banner" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 2rem; border-radius: 15px; margin: 2rem 0;">
+        <h3 class="completion-title" style="margin-bottom: 1rem; color: #FFFFFF !important; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">✈️ Your adventure awaits!</h3>
+        <p class="completion-text" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem; color: #FFFFFF !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
             We've successfully created your personalized travel itinerary. 
             Your journey is now planned and ready to unfold!
         </p>
-        <p style="font-size: 1rem; margin-bottom: 0;">
+        <p class="completion-text" style="font-size: 1rem; margin-bottom: 0; color: #FFFFFF !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
             Safe travels and have an amazing experience! 🌍
         </p>
     </div>
