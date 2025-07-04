@@ -17,7 +17,7 @@ The platform addresses the challenge of **dynamic workflow routing** based on us
 - **🎨 Modern UI/UX** with custom CSS styling and responsive design
 - **📱 Progressive Step Indicators** for enhanced user experience
 
-## 📋 Requirements
+## Requirements
 
 - **Python 3.8+**
   All dependencies are listed in `requirements.txt`. Install via:
