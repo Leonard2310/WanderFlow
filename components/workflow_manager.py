@@ -34,11 +34,12 @@ class WorkflowManager:
             return None
     
     def fetch_task_by_ref(self, wf_id: str, ref_name: str):
-        """Fetch a task by reference name - stessa logica del codice originale"""
+        """Fetch a task by reference name - incluso PENDING per task asyncComplete"""
         try:
             wf = self.executor.get_workflow(workflow_id=wf_id, include_tasks=True)
             for task in wf.tasks:
-                if task.reference_task_name == ref_name and task.status in ("SCHEDULED", "IN_PROGRESS"):
+                # Includi anche PENDING per gestire task asyncComplete
+                if task.reference_task_name == ref_name and task.status in ("SCHEDULED", "IN_PROGRESS", "PENDING"):
                     return task
         except Exception as e:
             st.error(f"Error fetching task {ref_name}: {e}")
@@ -54,10 +55,10 @@ class WorkflowManager:
             # Fai il poll per acquisire il task
             self.task_client.poll_task(task_type=task_type, worker_id="streamlit_ui")
             
-            # Completa il task
+            # Completa il task - USA ACCESSO DIRETTO COME DASHBOARD FUNZIONANTE
             self.task_client.update_task({
                 "taskId": task_id,
-                "workflowInstanceId": SessionState.get("workflow_id"),
+                "workflowInstanceId": st.session_state.workflow_id,  # ✅ Come dashboard.py
                 "workerId": "streamlit_ui",
                 "status": status,
                 "outputData": output or {}
@@ -68,8 +69,45 @@ class WorkflowManager:
             st.error(f"Error completing task: {e}")
             return False
     
+    def wait_for_itinerary_task(self, wf_id: str) -> Optional[str]:
+        """Wait for itinerary task - STESSA LOGICA IDENTICA del dashboard.py funzionante"""
+        with st.spinner("Elaboro itinerario…"):
+            while True:
+                try:
+                    st.write(f"🔧 DEBUG: Polling per ShowItinerary task...")  # DEBUG
+                    t = self.fetch_task_by_ref(wf_id, "ShowItinerary")
+                    if t:
+                        st.write(f"🔧 DEBUG: Task ShowItinerary trovato! Status: {t.status}, Task ID: {t.task_id}")  # DEBUG
+                        
+                        # Se il task è PENDING (schedulato ma non ancora claimed), facciamo il poll per claimarlo
+                        if t.status == "SCHEDULED" or t.status == "PENDING":
+                            st.write(f"🔧 DEBUG: Task in stato {t.status}, facendo poll per claimarlo...")  # DEBUG
+                            try:
+                                # Fai il poll per acquisire il task (stesso pattern del dashboard)
+                                self.task_client.poll_task(task_type=t.task_type, worker_id="streamlit_ui")
+                                st.write(f"🔧 DEBUG: Poll completato, ricontrollando status...")  # DEBUG
+                                time.sleep(1)  # Breve pausa per permettere l'aggiornamento
+                                continue  # Ricomincia il loop per controllare il nuovo status
+                            except Exception as poll_error:
+                                st.write(f"🔧 DEBUG: Errore durante poll: {poll_error}")  # DEBUG
+                        
+                        # Se il task è IN_PROGRESS o ha i dati necessari, estraiamo l'itinerario
+                        st.write(f"🔧 DEBUG: Input data keys: {list(t.input_data.keys()) if t.input_data else 'No input_data'}")  # DEBUG
+                        if t.input_data and "itinerary" in t.input_data:
+                            st.write(f"🔧 DEBUG: Itinerario trovato nei dati di input!")  # DEBUG
+                            return t.input_data["itinerary"]
+                        else:
+                            st.write(f"🔧 DEBUG: Campo 'itinerary' non trovato nei dati di input, continuando il polling...")  # DEBUG
+                    else:
+                        st.write(f"🔧 DEBUG: Task ShowItinerary non ancora disponibile, continuando il polling...")  # DEBUG
+                    time.sleep(2)
+                except Exception as e:
+                    st.error(f"Debug: Errore durante l'attesa dell'itinerario: {e}")
+                    time.sleep(2)
+                    continue
+
     def wait_for_output_key(self, wf_id: str, key: str, msg: str) -> Optional[Any]:
-        """Wait for an output key - stessa logica del codice originale"""
+        """Wait for an output key - STESSA LOGICA IDENTICA del dashboard.py funzionante"""
         with st.spinner(msg):
             while True:
                 try:
@@ -78,8 +116,10 @@ class WorkflowManager:
                         return wf.output[key]
                     time.sleep(2)
                 except Exception as e:
-                    st.error(f"Error while waiting for output: {e}")
-                    return None
+                    # Log dell'errore ma continua ad aspettare (come dashboard.py)
+                    print(f"Warning while waiting for output: {e}")
+                    time.sleep(2)
+                    continue
     
     def cache_task(self, ref_name: str, state_key: str):
         """Cache a task ID in session state - stessa logica del codice originale"""

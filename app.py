@@ -195,18 +195,20 @@ def show_preferences_form():
 
         pref_task_id = SessionState.get("pref_task_id")
         if pref_task_id:
+            st.write(f"🔧 DEBUG: About to complete task {pref_task_id}")  # DEBUG
             if workflow_manager.complete_task(pref_task_id, "COMPLETED", {
                 "durata": duration,
                 "preferences": preferences
             }):
                 st.success("🎉 Preferences submitted successfully!")
+                st.write(f"🔧 DEBUG: Task completed, waiting for itinerary...")  # DEBUG
 
-                itinerary_data = workflow_manager.wait_for_output_key(
-                    SessionState.get("workflow_id"),
-                    "itinerary",
-                    "🤖 Creating your personalized itinerary..."
+                # USA LA STESSA LOGICA DEL DASHBOARD FUNZIONANTE
+                itinerary_data = workflow_manager.wait_for_itinerary_task(
+                    SessionState.get("workflow_id")
                 )
 
+                st.write(f"🔧 DEBUG: wait_for_itinerary_task returned: {type(itinerary_data)} - {bool(itinerary_data)}")  # DEBUG
                 if itinerary_data:
                     SessionState.set("itinerary", itinerary_data)
                     SessionState.set_step(2)

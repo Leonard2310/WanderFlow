@@ -323,7 +323,7 @@ class PDFGenerator:
         canvas_obj.setFont('Helvetica-Bold', 40)
         canvas_obj.setFillColor(self.COLORS['light_grey'])
         canvas_obj.rotate(45)
-        canvas_obj.drawCentredText(300, -200, "TripMatch")
+        canvas_obj.drawCentredString(300, -200, "TripMatch")
         canvas_obj.restoreState()
     
     @staticmethod
