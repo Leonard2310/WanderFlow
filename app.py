@@ -345,6 +345,10 @@ def show_itinerary_results():
                     "additional_info": current_extra_info
                 }):
                     st.success("🎉 Additional information accepted!")
+                    # Vai direttamente alla schermata di completamento
+                    SessionState.set_step(3)
+                    SessionState.set("workflow_completed", True)
+                    st.balloons()
                     st.rerun()
                 else:
                     st.error("❌ Error confirming additional information.")
@@ -352,19 +356,10 @@ def show_itinerary_results():
         # Pulsanti finali
         col1, col2, col3 = st.columns([1, 1, 1])
         
-        with col1:
+        with col2:
             if st.button("🔄 Start New Trip Planning", use_container_width=True):
                 SessionState.reset()
                 st.rerun()
-        
-        with col3:
-            # Pulsante per completare definitivamente il workflow
-            if SessionState.get("itinerary") and (SessionState.get("extra_info") or not SessionState.get("extra_requested")):
-                if st.button("✅ Finish Trip Planning", use_container_width=True, type="primary"):
-                    SessionState.set_step(3)
-                    SessionState.set("workflow_completed", True)
-                    st.balloons()
-                    st.rerun()
     
     except Exception as e:
         st.error(f"❌ Error displaying itinerary: {e}")
