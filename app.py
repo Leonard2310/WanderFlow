@@ -87,7 +87,9 @@ def main():
         return
     
     # Routing basato sullo stato del workflow
-    if not SessionState.has_itinerary():
+    if SessionState.get("workflow_completed"):
+        show_completion_screen()
+    elif not SessionState.has_itinerary():
         show_preferences_form()
     else:
         show_itinerary_results()
@@ -195,20 +197,17 @@ def show_preferences_form():
 
         pref_task_id = SessionState.get("pref_task_id")
         if pref_task_id:
-            st.write(f"🔧 DEBUG: About to complete task {pref_task_id}")  # DEBUG
             if workflow_manager.complete_task(pref_task_id, "COMPLETED", {
                 "durata": duration,
                 "preferences": preferences
             }):
                 st.success("🎉 Preferences submitted successfully!")
-                st.write(f"🔧 DEBUG: Task completed, waiting for itinerary...")  # DEBUG
 
                 # USA LA STESSA LOGICA DEL DASHBOARD FUNZIONANTE
                 itinerary_data = workflow_manager.wait_for_itinerary_task(
                     SessionState.get("workflow_id")
                 )
 
-                st.write(f"🔧 DEBUG: wait_for_itinerary_task returned: {type(itinerary_data)} - {bool(itinerary_data)}")  # DEBUG
                 if itinerary_data:
                     SessionState.set("itinerary", itinerary_data)
                     SessionState.set_step(2)
@@ -264,22 +263,6 @@ def show_itinerary_results():
         
         st.markdown("### 🎯 What would you like to do next?")
         
-        # Mostra stato corrente per debug
-        show_task_id = SessionState.get("show_task_id")
-        choice_task_id = SessionState.get("choice_task_id")
-        
-        status_info = f"""
-        **Current Status:** 
-        - ShowItinerary Task: {'✅ Found' if show_task_id else '❌ Not found'}
-        - GetUserChoice Task: {'✅ Found' if choice_task_id else '❌ Not found'}
-        """
-        
-        # Se ShowItinerary è trovato ma GetUserChoice no, mostra pulsante di ricerca
-        if show_task_id and not choice_task_id:
-            status_info += "\n\n⚠️ **Note:** You need to accept the itinerary first to unlock additional options."
-        
-        st.markdown(status_info)
-        
         # Pulsanti di azione
         col1, col2 = st.columns(2)
         
@@ -292,10 +275,9 @@ def show_itinerary_results():
                         "selected_itinerary_index": 0,
                         "selected_itinerary": itinerary_text
                     }):
-                        st.success("🎉 Itinerary confirmed! Have an amazing trip!")
-                        # Mantieni l'itinerario per uso futuro (come nel dashboard)
-                        SessionState.set("itinerary", itinerary_text)
+                        # Marca il workflow come completato
                         SessionState.set_step(3)
+                        SessionState.set("workflow_completed", True)
                         st.balloons()
                         st.rerun()
                     else:
@@ -342,20 +324,10 @@ def show_itinerary_results():
         # Pulsante per ricominciare
         col1, col2, col3 = st.columns([1, 1, 1])
         
-        with col1:
+        with col2:
             if st.button("🔄 Start New Trip Planning", use_container_width=True):
                 SessionState.reset()
                 st.rerun()
-        
-        with col3:
-            if st.button("🔍 Debug Workflow", use_container_width=True):
-                debug_info = workflow_manager.get_workflow_debug_info(SessionState.get("workflow_id"))
-                st.json(debug_info)
-                
-                # Debug specifico per il problema della durata
-                st.markdown("### 🔧 Switch Logic Debug")
-                switch_debug = workflow_manager.debug_workflow_switch_logic(SessionState.get("workflow_id"))
-                st.json(switch_debug)
     
     except Exception as e:
         st.error(f"❌ Error displaying itinerary: {e}")
@@ -364,6 +336,106 @@ def show_itinerary_results():
             SessionState.reset()
             st.rerun()
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def show_completion_screen():
+    """Mostra la schermata di completamento e ringraziamento"""
+    SessionState.set_step(3)
+    
+    st.markdown('<div class="custom-form-container">', unsafe_allow_html=True)
+    
+    # Header di completamento
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem 0;">
+        <h1 style="color: #28a745; font-size: 2.5rem; margin-bottom: 1rem;">
+            🎉 Trip Planning Complete!
+        </h1>
+        <h2 style="color: #667eea; font-size: 1.8rem; margin-bottom: 2rem;">
+            Thank you for using TripMatch!
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Messaggio di ringraziamento
+    st.markdown("""
+    <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 2rem; border-radius: 15px; color: white; margin: 2rem 0;">
+        <h3 style="margin-bottom: 1rem;">✈️ Your adventure awaits!</h3>
+        <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+            We've successfully created your personalized travel itinerary. 
+            Your journey is now planned and ready to unfold!
+        </p>
+        <p style="font-size: 1rem; margin-bottom: 0;">
+            Safe travels and have an amazing experience! 🌍
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Riepilogo del viaggio
+    itinerary_data = SessionState.get("itinerary")
+    if itinerary_data:
+        # Mostra un estratto dell'itinerario
+        itinerary_text = UIComponents.process_itinerary_data(itinerary_data)
+        
+        # Pulsante per scaricare PDF finale
+        st.markdown("### 📄 Take Your Itinerary With You")
+        pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text)
+        if pdf_buffer:
+            st.download_button(
+                label="📱 Download Your Complete Itinerary (PDF)",
+                data=pdf_buffer,
+                file_name=f"TripMatch_Itinerary_{uuid.uuid4().hex[:8]}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary"
+            )
+    
+    # Statistiche e ringraziamenti
+    st.markdown("---")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <h4 style="color: #667eea;">🤖 AI-Powered</h4>
+            <p>Personalized recommendations</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <h4 style="color: #667eea;">⚡ Fast Planning</h4>
+            <p>Instant itinerary generation</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <h4 style="color: #667eea;">🎯 Tailored</h4>
+            <p>Based on your preferences</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Pulsante per pianificare un nuovo viaggio
+    st.markdown("---")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        if st.button("🚀 Plan Another Trip", use_container_width=True, type="primary"):
+            SessionState.reset()
+            st.rerun()
+        
+        st.markdown("""
+        <div style="text-align: center; margin-top: 2rem; color: #6c757d;">
+            <p>Made with ❤️ by <strong>TripMatch</strong></p>
+            <p style="font-size: 0.9rem;">Your AI Travel Planning Assistant</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ================= SIDEBAR E FOOTER =================

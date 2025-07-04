@@ -26,6 +26,7 @@ class SessionState:
         "map_center": [30, 0],
         "preferences_submitted": False,
         "itinerary_confirmed": False,
+        "workflow_completed": False,  # Nuovo: per tracking completamento workflow
         "country_selection_made": False,  # Nuovo: per tracking selezione paese
         "map_needs_update": False  # Nuovo: per tracking aggiornamenti mappa
     }

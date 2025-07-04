@@ -74,35 +74,23 @@ class WorkflowManager:
         with st.spinner("Elaboro itinerario…"):
             while True:
                 try:
-                    st.write(f"🔧 DEBUG: Polling per ShowItinerary task...")  # DEBUG
                     t = self.fetch_task_by_ref(wf_id, "ShowItinerary")
                     if t:
-                        st.write(f"🔧 DEBUG: Task ShowItinerary trovato! Status: {t.status}, Task ID: {t.task_id}")  # DEBUG
-                        
                         # Se il task è PENDING (schedulato ma non ancora claimed), facciamo il poll per claimarlo
                         if t.status == "SCHEDULED" or t.status == "PENDING":
-                            st.write(f"🔧 DEBUG: Task in stato {t.status}, facendo poll per claimarlo...")  # DEBUG
                             try:
                                 # Fai il poll per acquisire il task (stesso pattern del dashboard)
                                 self.task_client.poll_task(task_type=t.task_type, worker_id="streamlit_ui")
-                                st.write(f"🔧 DEBUG: Poll completato, ricontrollando status...")  # DEBUG
                                 time.sleep(1)  # Breve pausa per permettere l'aggiornamento
                                 continue  # Ricomincia il loop per controllare il nuovo status
                             except Exception as poll_error:
-                                st.write(f"🔧 DEBUG: Errore durante poll: {poll_error}")  # DEBUG
+                                pass  # Continua senza mostrare errori
                         
                         # Se il task è IN_PROGRESS o ha i dati necessari, estraiamo l'itinerario
-                        st.write(f"🔧 DEBUG: Input data keys: {list(t.input_data.keys()) if t.input_data else 'No input_data'}")  # DEBUG
                         if t.input_data and "itinerary" in t.input_data:
-                            st.write(f"🔧 DEBUG: Itinerario trovato nei dati di input!")  # DEBUG
                             return t.input_data["itinerary"]
-                        else:
-                            st.write(f"🔧 DEBUG: Campo 'itinerary' non trovato nei dati di input, continuando il polling...")  # DEBUG
-                    else:
-                        st.write(f"🔧 DEBUG: Task ShowItinerary non ancora disponibile, continuando il polling...")  # DEBUG
                     time.sleep(2)
                 except Exception as e:
-                    st.error(f"Debug: Errore durante l'attesa dell'itinerario: {e}")
                     time.sleep(2)
                     continue
 
