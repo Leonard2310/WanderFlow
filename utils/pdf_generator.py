@@ -165,10 +165,10 @@ class PDFGenerator:
             'heading': ParagraphStyle(
                 'CustomHeading',
                 parent=styles['Heading3'],
-                fontSize=12,
+                fontSize=11,
                 textColor=self.COLORS['secondary'],
-                spaceAfter=12,
-                spaceBefore=15,
+                spaceAfter=4,
+                spaceBefore=6,
                 fontName='Helvetica-Bold',
                 leftIndent=10
             ),
@@ -177,30 +177,26 @@ class PDFGenerator:
                 'CustomBody',
                 parent=styles['Normal'],
                 fontSize=10,
-                leading=14,
-                spaceAfter=8,
-                alignment=TA_JUSTIFY,
+                leading=12,
+                spaceAfter=4,
+                alignment=TA_LEFT,
                 fontName='Helvetica',
                 textColor=self.COLORS['text'],
-                leftIndent=15,
-                rightIndent=15
+                leftIndent=10,
+                rightIndent=10
             ),
             
             'highlight': ParagraphStyle(
                 'CustomHighlight',
                 parent=styles['Normal'],
-                fontSize=11,
-                leading=16,
-                spaceAfter=12,
+                fontSize=12,
+                leading=14,
+                spaceAfter=6,
                 fontName='Helvetica-Bold',
-                textColor=white,
-                leftIndent=15,
-                rightIndent=15,
-                backColor=self.COLORS['accent'],
-                borderWidth=2,
-                borderColor=self.COLORS['accent'],
-                borderPadding=8,
-                spaceBefore=5
+                textColor=self.COLORS['primary'],
+                leftIndent=10,
+                rightIndent=10,
+                spaceBefore=8
             ),
             
             'footer': ParagraphStyle(
@@ -316,15 +312,15 @@ class PDFGenerator:
         # WanderFlow brand header
         story.append(Paragraph("WanderFlow", self.styles['brand_title']))
         story.append(Paragraph("Your AI-Powered Travel Planner", self.styles['footer']))
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 10))
         
         # Decorative line
         story.append(Paragraph("─" * 60, self.styles['footer']))
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 8))
         
         # Main title
         story.append(Paragraph("Your Personalized Travel Itinerary", self.styles['title']))
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 6))
         
         # Trip details in a nice format
         if destination or duration:
@@ -337,13 +333,13 @@ class PDFGenerator:
             if details:
                 for detail in details:
                     story.append(Paragraph(detail, self.styles['subtitle']))
-                    story.append(Spacer(1, 5))
+                    story.append(Spacer(1, 3))
         
         # Generation info
         date_str = self.created_date.strftime("%B %d, %Y at %H:%M")
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 6))
         story.append(Paragraph(f"Generated on {date_str}", self.styles['footer']))
-        story.append(Spacer(1, 25))
+        story.append(Spacer(1, 15))
         
         return story
     
@@ -423,7 +419,7 @@ class PDFGenerator:
         story = []
         
         story.append(Paragraph("Your Detailed Travel Plan", self.styles['section_header']))
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 8))
         
         # Process the itinerary text and remove markdown formatting
         clean_itinerary = self._remove_markdown_formatting(itinerary_text)
@@ -435,91 +431,33 @@ class PDFGenerator:
             
             # Clean up the paragraph
             cleaned_paragraph = paragraph.strip()
-                
-            # Enhanced day detection with multiple patterns
             paragraph_lower = cleaned_paragraph.lower()
+            
+            # Simplified day detection
             is_day_header = (
                 paragraph_lower.startswith('day ') or 
-                paragraph_lower.startswith('day') or
                 ' day ' in paragraph_lower[:20] or
-                paragraph_lower.startswith('giorno ') or
-                paragraph_lower.startswith('jour ') or
-                # Match patterns like "Day 1 -" or "Day 2:" or just "Day 2"
                 any(f'day {i}' in paragraph_lower[:15] for i in range(1, 31)) or
-                # Match date patterns like "04/07/2025"
-                re.match(r'^.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*$', paragraph_lower) or
-                # Match ordinal patterns like "1st day", "2nd day", etc.
-                re.match(r'^\s*\d+(st|nd|rd|th)\s+day', paragraph_lower) or
-                # Match patterns like "Day One", "Day Two", etc.
-                any(f'day {word}' in paragraph_lower for word in ['one', 'two', 'three', 'four', 'five', 'six', 'seven']) or
-                # Match standalone day numbers at start of line
-                re.match(r'^\s*\d+\s*[-:]\s*', cleaned_paragraph)
+                re.match(r'^.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*$', paragraph_lower)
             )
             
-            # Enhanced activity detection - more selective patterns
-            is_activity_header = (
-                # Strong keyword-based detection (tourism-specific)
-                any(keyword in paragraph_lower for keyword in [
-                    'full-day', 'half-day', 'tour', 'excursion', 'boat tour',
-                    'city centre', 'city center', 'centro città'
-                ]) or
-                # Activity verbs at start of line (tourist activities)
-                any(paragraph_lower.startswith(verb) for verb in [
-                    'explore', 'visit', 'discover', 'walk through', 'stroll',
-                    'climb', 'enjoy', 'experience', 'take a tour', 'see'
-                ]) or
-                # Famous landmarks and attractions (short, proper nouns)
-                (len(cleaned_paragraph.split()) <= 4 and 
-                 len(cleaned_paragraph) < 50 and
-                 any(word[0].isupper() for word in cleaned_paragraph.split() if word and len(word) > 2) and
-                 not cleaned_paragraph.endswith('.') and
-                 not cleaned_paragraph.startswith('  ') and
-                 len(cleaned_paragraph) > 8 and
-                 # Must contain landmark keywords or be very short and proper
-                 (any(landmark in paragraph_lower for landmark in [
-                     'square', 'plaza', 'piazza', 'cathedral', 'duomo', 'basilica',
-                     'church', 'museum', 'palace', 'castello', 'bridge', 'ponte',
-                     'gallery', 'market', 'park', 'garden', 'beach', 'grotto'
-                 ]) or len(cleaned_paragraph.split()) <= 3)) or
-                # Very short proper noun phrases (likely place names)
-                (len(cleaned_paragraph.split()) <= 3 and 
-                 len(cleaned_paragraph) < 40 and
-                 all(word[0].isupper() for word in cleaned_paragraph.split() if word.isalpha()) and
-                 not cleaned_paragraph.endswith('.') and
-                 len(cleaned_paragraph) > 5)
-            )
+            # Simplified time detection
+            is_time_header = any(keyword in paragraph_lower for keyword in [
+                'morning', 'afternoon', 'evening', 'night', 'mattina', 'pomeriggio', 'sera', 'notte'
+            ])
             
             if is_day_header:
-                # Add extra space before each day for better readability
-                story.append(Spacer(1, 25))
-                # Enhanced day header with consistent background styling
-                day_text = cleaned_paragraph
-                # Clean up any extra formatting
-                day_text = re.sub(r'^[-•\s]*', '', day_text)  # Remove leading bullets/dashes
+                # Day headers - simple bold formatting, minimal spacing
+                day_text = re.sub(r'^[-•\s]*', '', cleaned_paragraph)
                 story.append(Paragraph(f"<b>{day_text}</b>", self.styles['highlight']))
-                story.append(Spacer(1, 12))
-            elif any(keyword in paragraph_lower for keyword in ['morning', 'afternoon', 'evening', 'night', 'mattina', 'pomeriggio', 'sera', 'notte']):
-                # Time of day headers
-                story.append(Spacer(1, 8))
+            elif is_time_header:
+                # Time headers - slightly smaller, minimal spacing
                 story.append(Paragraph(f"<b>{cleaned_paragraph}</b>", self.styles['heading']))
-                story.append(Spacer(1, 5))
-            elif is_activity_header:
-                # Activity headers - also get highlight style for consistency
-                story.append(Spacer(1, 8))
-                activity_text = cleaned_paragraph
-                # Clean up any extra formatting
-                activity_text = re.sub(r'^[-•\s]*', '', activity_text)
-                story.append(Paragraph(f"<b>{activity_text}</b>", self.styles['highlight']))
-                story.append(Spacer(1, 8))
             else:
-                # Regular paragraph with better formatting
+                # All other content as regular text, very compact
                 formatted_text = cleaned_paragraph
-                # Add bullet points for lists
                 if formatted_text.startswith('-') or formatted_text.startswith('•'):
-                    formatted_text = f"  • {formatted_text[1:].strip()}"
-                elif formatted_text and not formatted_text.startswith('  '):
-                    # Add slight indentation for regular content
-                    formatted_text = f"  {formatted_text}"
+                    formatted_text = f"• {formatted_text[1:].strip()}"
                 story.append(Paragraph(formatted_text, self.styles['body']))
         
         return story
