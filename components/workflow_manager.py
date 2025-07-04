@@ -69,30 +69,7 @@ class WorkflowManager:
             st.error(f"Error completing task: {e}")
             return False
     
-    def wait_for_itinerary_task(self, wf_id: str) -> Optional[str]:
-        """Wait for itinerary task - STESSA LOGICA IDENTICA del dashboard.py funzionante"""
-        with st.spinner("Elaboro itinerario…"):
-            while True:
-                try:
-                    t = self.fetch_task_by_ref(wf_id, "ShowItinerary")
-                    if t:
-                        # Se il task è PENDING (schedulato ma non ancora claimed), facciamo il poll per claimarlo
-                        if t.status == "SCHEDULED" or t.status == "PENDING":
-                            try:
-                                # Fai il poll per acquisire il task (stesso pattern del dashboard)
-                                self.task_client.poll_task(task_type=t.task_type, worker_id="streamlit_ui")
-                                time.sleep(1)  # Breve pausa per permettere l'aggiornamento
-                                continue  # Ricomincia il loop per controllare il nuovo status
-                            except Exception as poll_error:
-                                pass  # Continua senza mostrare errori
-                        
-                        # Se il task è IN_PROGRESS o ha i dati necessari, estraiamo l'itinerario
-                        if t.input_data and "itinerary" in t.input_data:
-                            return t.input_data["itinerary"]
-                    time.sleep(2)
-                except Exception as e:
-                    time.sleep(2)
-                    continue
+
 
     def wait_for_output_key(self, wf_id: str, key: str, msg: str) -> Optional[Any]:
         """Wait for an output key - STESSA LOGICA IDENTICA del dashboard.py funzionante"""
@@ -171,6 +148,22 @@ class WorkflowManager:
                     time.sleep(2)
                 except Exception as e:
                     st.error(f"Error waiting for itinerary task: {e}")
+                    return None
+    
+    def wait_for_additional_info_task(self, wf_id: str) -> Optional[str]:
+        """Wait for ShowMoreInformation task - stessa logica di ShowItinerary"""
+        with st.spinner("Caricamento informazioni aggiuntive..."):
+            while True:
+                try:
+                    task = self.fetch_task_by_ref(wf_id, "ShowMoreInformation")
+                    if task:
+                        # Gestisce sia input_data che inputData per compatibilità
+                        input_data = getattr(task, 'input_data', None) or getattr(task, 'inputData', None)
+                        if input_data and "itinerary" in input_data:
+                            return input_data["itinerary"]
+                    time.sleep(2)
+                except Exception as e:
+                    st.error(f"Error waiting for additional info task: {e}")
                     return None
     
     def terminate_workflow(self, wf_id: str, reason: str = "User terminated") -> bool:

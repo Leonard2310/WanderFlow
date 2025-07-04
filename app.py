@@ -244,7 +244,8 @@ def show_itinerary_results():
         UIComponents.render_itinerary_display(itinerary_text)
         
         # Pulsante per scaricare PDF
-        pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text)
+        extra_info = SessionState.get("extra_info")
+        pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text, extra_info=extra_info)
         if pdf_buffer:
             st.download_button(
                 label="📄 Download PDF Itinerary",
@@ -286,55 +287,67 @@ def show_itinerary_results():
                     st.error("⚠️ ShowItinerary task ID not found.")
         
         with col2:
-            # Pulsante per info aggiuntive - AGGIORNA SEMPRE IL CACHE
-            # Il task AskforAddInfo_ref diventa disponibile dopo che ShowItinerary è stato accettato
-            workflow_manager.cache_task("AskforAddInfo_ref", "choice_task_id")
-            choice_task_id = SessionState.get("choice_task_id")
-            btn_disabled = (choice_task_id is None or SessionState.get("extra_requested", False))
+            # STESSO PATTERN DEL DASHBOARD FUNZIONANTE - AskforAddInfo_ref
+            workflow_manager.cache_task("AskforAddInfo_ref", "request_confirmation_task_id")
+            request_task_id = SessionState.get("request_confirmation_task_id")
+            confirmation_response = SessionState.get("confirmation_response")
             
-            # Mostra stato del task per debug
-            if choice_task_id:
-                st.success("✅ Additional info option available")
+            # Se il task è attivo e l'utente non ha ancora risposto
+            if request_task_id and confirmation_response is None:
+                st.subheader("❓ Richiedere info aggiuntive?")
+                col_yes, col_no = st.columns(2)
+                with col_yes:
+                    if st.button("Sì", key="confirm_yes", use_container_width=True):
+                        if workflow_manager.complete_task(request_task_id, "COMPLETED", {"user_choice": "yes"}):
+                            SessionState.set("confirmation_response", "Sì")
+                            st.rerun()
+                        else:
+                            st.error("❌ Error requesting additional info.")
+                with col_no:
+                    if st.button("No", key="confirm_no", use_container_width=True):
+                        if workflow_manager.complete_task(request_task_id, "COMPLETED", {"user_choice": "no"}):
+                            SessionState.set("confirmation_response", "No")
+                            st.rerun()
+                        else:
+                            st.error("❌ Error declining additional info.")
+            
+            # Se l'utente ha già risposto, mostra la scelta
+            elif confirmation_response:
+                st.info(f"Your choice: **{confirmation_response}**")
             else:
                 st.info("⏳ Additional info option will be available after accepting the itinerary")
-            
-            if st.button("ℹ️ Request Additional Info", 
-                        disabled=btn_disabled, 
-                        use_container_width=True):
-                if choice_task_id:
-                    if workflow_manager.complete_task(choice_task_id, "COMPLETED", {
-                        "user_choice": "yes"  # Il workflow si aspetta questo parametro
-                    }):
-                        SessionState.set("extra_requested", True)
-                        st.rerun()
-                    else:
-                        st.error("❌ Error requesting additional info.")
-                else:
-                    st.error("⚠️ AskforAddInfo task not available yet.")
         
-        # DOPO l'accettazione, GetUserChoice diventa disponibile - come nel dashboard
-        
-        # Gestione info aggiuntive (seguendo il pattern dashboard.py)
-        if SessionState.get("extra_requested", False) and not SessionState.get("extra_info"):
-            # Le info aggiuntive vengono dal task TravelReccomandation nel workflow
-            extra_info_data = workflow_manager.wait_for_output_key(
-                SessionState.get("workflow_id"),
-                "TravelReccomandation",  # Cambiato da "extra_info" a "TravelReccomandation"
-                "📚 Gathering additional travel information..."
+        # GESTIONE INFO AGGIUNTIVE - NUOVO PATTERN CON ShowMoreInformation
+        if SessionState.get("confirmation_response") == "Sì" and not SessionState.get("extra_info"):
+            # Le info aggiuntive vengono dal task ShowMoreInformation (come ShowItinerary)
+            extra_info_data = workflow_manager.wait_for_additional_info_task(
+                SessionState.get("workflow_id")
             )
             if extra_info_data:
-                # Estrai il contenuto della risposta dal task TravelReccomandation
-                if isinstance(extra_info_data, dict) and "response" in extra_info_data:
-                    content = extra_info_data.get("response", {}).get("body", {}).get("choices", [{}])[0].get("message", {}).get("content", "")
-                    SessionState.set("extra_info", content)
-                else:
-                    SessionState.set("extra_info", str(extra_info_data))
+                SessionState.set("extra_info", extra_info_data)
                 st.rerun()
         
-        # Mostra info aggiuntive (come nel dashboard.py)
+        # Mostra info aggiuntive se disponibili
         if SessionState.get("extra_info"):
-            st.markdown("### 📚 Additional Travel Information")
+            st.subheader("ℹ️ Informazioni aggiuntive")
             st.markdown(SessionState.get("extra_info"))
+            
+            # Cache del task ShowMoreInformation per permettere l'accettazione
+            workflow_manager.cache_task("ShowMoreInformation", "show_more_info_task_id")
+            show_more_info_task_id = SessionState.get("show_more_info_task_id")
+            
+            # Pulsante per accettare le info aggiuntive
+            if show_more_info_task_id and st.button("✅ Accept Additional Information", use_container_width=True):
+                # Usa le info aggiuntive dallo stato della sessione
+                current_extra_info = SessionState.get("extra_info")
+                if workflow_manager.complete_task(show_more_info_task_id, "COMPLETED", {
+                    "accepted": True,
+                    "additional_info": current_extra_info
+                }):
+                    st.success("🎉 Additional information accepted!")
+                    st.rerun()
+                else:
+                    st.error("❌ Error confirming additional information.")
         
         # Pulsanti finali
         col1, col2, col3 = st.columns([1, 1, 1])
@@ -403,7 +416,8 @@ def show_completion_screen():
         
         # Pulsante per scaricare PDF finale
         st.markdown("### 📄 Take Your Itinerary With You")
-        pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text)
+        extra_info = SessionState.get("extra_info")
+        pdf_buffer = PDFGenerator.create_enhanced_pdf(itinerary_text, extra_info=extra_info)
         if pdf_buffer:
             st.download_button(
                 label="📱 Download Your Complete Itinerary (PDF)",

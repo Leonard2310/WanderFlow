@@ -14,6 +14,9 @@ class SessionState:
         "pref_task_id": None,
         "show_task_id": None,
         "choice_task_id": None,
+        "request_confirmation_task_id": None,  # NUOVO: per AskforAddInfo_ref come nel dashboard
+        "show_more_info_task_id": None,  # NUOVO: per ShowMoreInformation task
+        "confirmation_response": None,  # NUOVO: per la risposta Sì/No come nel dashboard
         "itinerary": None,
         "extra_requested": False,
         "extra_info": None,
@@ -69,6 +72,9 @@ class SessionState:
             "pref_task_id": cls.get("pref_task_id"),
             "show_task_id": cls.get("show_task_id"),
             "choice_task_id": cls.get("choice_task_id"),
+            "request_confirmation_task_id": cls.get("request_confirmation_task_id"),
+            "show_more_info_task_id": cls.get("show_more_info_task_id"),
+            "confirmation_response": cls.get("confirmation_response"),
             "extra_requested": cls.get("extra_requested"),
             "has_itinerary": cls.has_itinerary(),
             "has_extra_info": bool(cls.get("extra_info")),

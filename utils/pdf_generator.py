@@ -127,7 +127,8 @@ class PDFGenerator:
                            itinerary_text: str, 
                            user_preferences: Optional[Dict[str, Any]] = None,
                            destination: Optional[str] = None,
-                           duration: Optional[int] = None) -> BytesIO:
+                           duration: Optional[int] = None,
+                           extra_info: Optional[str] = None) -> BytesIO:
         """
         Create an enhanced PDF for a travel itinerary
         
@@ -136,6 +137,7 @@ class PDFGenerator:
             user_preferences: User preferences data
             destination: Destination country/city
             duration: Trip duration in days
+            extra_info: Additional travel information
             
         Returns:
             BytesIO buffer containing the PDF
@@ -167,6 +169,10 @@ class PDFGenerator:
             
             # Add main itinerary content
             story.extend(self._create_itinerary_section(itinerary_text))
+            
+            # Add additional information section if provided
+            if extra_info:
+                story.extend(self._create_additional_info_section(extra_info))
             
             # Add footer information
             story.extend(self._create_footer_section())
@@ -269,6 +275,32 @@ class PDFGenerator:
         
         return story
     
+    def _create_additional_info_section(self, extra_info: str) -> List:
+        """Create the additional information section"""
+        story = []
+        
+        story.append(Spacer(1, 20))
+        story.append(Paragraph("ℹ️ Additional Travel Information", self.styles['heading']))
+        story.append(Spacer(1, 15))
+        
+        # Process the additional information text
+        paragraphs = extra_info.split('\n')
+        
+        for paragraph in paragraphs:
+            if not paragraph.strip():
+                continue
+                
+            # Check if it's a section header
+            if any(keyword in paragraph.lower() for keyword in ['documents', 'vaccination', 'weather', 'dining', 'attractions', 'booking']):
+                story.append(Spacer(1, 10))
+                story.append(Paragraph(f"📌 {paragraph.strip()}", self.styles['highlight']))
+                story.append(Spacer(1, 5))
+            else:
+                # Regular paragraph
+                story.append(Paragraph(paragraph.strip(), self.styles['body']))
+        
+        return story
+    
     def _create_footer_section(self) -> List:
         """Create the footer section"""
         story = []
@@ -343,13 +375,15 @@ class PDFGenerator:
     
     @staticmethod
     def create_enhanced_pdf(itinerary_text: str, 
-                          user_data: Optional[Dict[str, Any]] = None) -> BytesIO:
+                          user_data: Optional[Dict[str, Any]] = None,
+                          extra_info: Optional[str] = None) -> BytesIO:
         """
         Create an enhanced PDF with full formatting (backward compatibility)
         
         Args:
             itinerary_text: The itinerary content
             user_data: Optional user preferences and data
+            extra_info: Optional additional travel information
             
         Returns:
             BytesIO buffer containing the PDF
@@ -365,5 +399,6 @@ class PDFGenerator:
             itinerary_text, 
             preferences, 
             destination, 
-            duration
+            duration,
+            extra_info
         )
