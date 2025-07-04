@@ -208,7 +208,7 @@ class MapComponents:
             SessionState.set("last_confirmed_country", confirmed_country)
 
         # Paese confermato - mostra la mappa completa
-        map_height = 500  # Increased height for better visibility 
+        map_height = 400 
 
         # Ora crea la mappa con stato aggiornato
         map_to_render = MapComponents.create_enhanced_map(confirmed_country)

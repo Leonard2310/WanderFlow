@@ -528,6 +528,58 @@ class UIComponents:
                 margin-top: 0.5rem;
             }
 
+            /* Country selection grouped styling */
+            .stSelectbox option[data-testid*="continent"] {
+                font-weight: bold !important;
+                background: linear-gradient(45deg, #667eea, #764ba2) !important;
+                color: white !important;
+                padding: 0.5rem !important;
+                border-bottom: 1px solid #ddd !important;
+            }
+
+            /* Country options styling */
+            .stSelectbox option {
+                padding: 0.3rem !important;
+                border-bottom: 1px solid #f0f0f0 !important;
+            }
+
+            .stSelectbox option:hover {
+                background-color: rgba(102, 126, 234, 0.1) !important;
+            }
+
+            /* Better spacing for grouped selectbox */
+            .country-selector-row .stSelectbox {
+                margin-bottom: 0.5rem !important;
+            }
+
+            /* Make continent headers appear disabled/non-selectable */
+            .stSelectbox option[value*="────"] {
+                background-color: #f5f5f5 !important;
+                color: #888 !important;
+                font-style: italic !important;
+                cursor: not-allowed !important;
+                pointer-events: none !important;
+            }
+
+            /* Style continent headers in dropdown */
+            div[data-baseweb="popover"] > div > ul > li[aria-label*="────"] {
+                background-color: #f8f9fa !important;
+                color: #6c757d !important;
+                font-weight: bold !important;
+                text-align: center !important;
+                cursor: not-allowed !important;
+                pointer-events: none !important;
+                border-top: 2px solid #dee2e6 !important;
+                border-bottom: 1px solid #dee2e6 !important;
+            }
+
+            /* Improve visual separation between continents and countries */
+            div[data-baseweb="popover"] > div > ul > li[aria-label*="   "] {
+                padding-left: 1rem !important;
+                border-left: 3px solid #667eea !important;
+                margin-left: 0.5rem !important;
+            }
+
         </style>
         """, unsafe_allow_html=True)
 
@@ -733,21 +785,62 @@ class UIComponents:
 
     @staticmethod
     def render_country_selection() -> str:
-        """Render country selection dropdown with confirm button and improved alignment"""
+        """Render country selection dropdown grouped by continent with flags"""
         with st.container():
             st.markdown('<div class="section-container">', unsafe_allow_html=True)
             st.markdown('<h3>🌍 Preferred Country</h3>', unsafe_allow_html=True)
+            st.markdown('<p style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Countries are organized by continent for easier selection</p>', unsafe_allow_html=True)
 
             # Avvia riga con stile custom
             st.markdown('<div class="country-selector-row">', unsafe_allow_html=True)
 
-            country_options = AppConfig.get_country_options()
+            # Use grouped country options
+            country_options = ["Select a country (optional)"] + AppConfig.get_country_options_grouped()
+            
+            # Initialize session state for tracking valid selections
+            if "last_valid_country_index" not in st.session_state:
+                st.session_state.last_valid_country_index = 0
+            
+            # Find current valid index (avoid continent headers)
+            current_index = st.session_state.last_valid_country_index
+            
             selected_option = st.selectbox(
-                "Select a country (optional)",
+                "🌍 Choose your destination country:",
                 country_options,
-                key="country_selector"
+                index=current_index,
+                key="country_selector",
+                help="Countries are grouped by continent. Select any country to see it highlighted on the map.",
+                format_func=lambda x: (
+                    f"🌍 {x.replace('────', '').strip()} 🌍" if x.startswith("────") 
+                    else x
+                )
             )
-            selected_country = AppConfig.extract_country_from_option(selected_option)
+            
+            # Get the current selection index
+            try:
+                selected_index = country_options.index(selected_option)
+            except ValueError:
+                selected_index = 0
+            
+            # Check if user selected a continent header (should not be allowed)
+            if selected_option.startswith("────"):
+                # Show warning and reset to default
+                st.warning("⚠️ Continent headers are not selectable. Please choose a specific country.")
+                selected_country = ""
+                # Keep last valid index as fallback
+            else:
+                # Update last valid selection index
+                st.session_state.last_valid_country_index = selected_index
+                
+                # Extract the actual country name
+                if selected_option == "Select a country (optional)":
+                    selected_country = ""
+                else:
+                    selected_country = AppConfig.extract_country_from_grouped_option(selected_option)
+
+            # Show selection info if a valid country is selected
+            if selected_country:
+                st.success(f"✅ Selected: **{selected_country}**")
 
             st.markdown('</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)

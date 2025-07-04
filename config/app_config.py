@@ -135,6 +135,45 @@ class AppConfig:
         return countries_by_region
 
     @classmethod
+    def get_country_options_grouped(cls) -> List[str]:
+        """Get all country options grouped by continent for better UX"""
+        grouped_options = []
+        
+        # Order of continents for better UX
+        continent_order = ["Europe", "North America", "Asia", "Africa", "South America", "Oceania", "Middle East"]
+        
+        for continent in continent_order:
+            if continent in cls.COUNTRIES_DATA:
+                region_data = cls.COUNTRIES_DATA[continent]
+                # Add continent header
+                grouped_options.append(f"──── {continent} ────")
+                
+                # Add countries in this continent
+                for country in region_data["countries"]:
+                    flag = cls.COUNTRY_FLAGS.get(country, "🗺️")
+                    grouped_options.append(f"   {country} {flag}")
+        
+        return grouped_options
+
+    @classmethod
+    def extract_country_from_grouped_option(cls, option: str) -> str:
+        """Extract country name from grouped selectbox option"""
+        if not option or option.startswith("────") or option.startswith("Select"):
+            return ""
+        
+        # Remove leading spaces and flag
+        option = option.strip()
+        if option.startswith("   "):
+            option = option[3:]  # Remove the 3 leading spaces
+        
+        # Remove flag at the end
+        for flag in cls.COUNTRY_FLAGS.values():
+            if option.endswith(flag):
+                return option.replace(flag, "").strip()
+        
+        return option.strip()
+
+    @classmethod
     def extract_country_from_option(cls, option: str) -> str:
         """Extract country name from selectbox option, removing flag"""
         if option:
