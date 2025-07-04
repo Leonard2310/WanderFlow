@@ -16,7 +16,7 @@ class AppConfig:
 
     # Workflow configuration
     WORKFLOW_NAME = "TripMatch_BPA"
-    WORKFLOW_VERSION = 19
+    WORKFLOW_VERSION = 26
 
     # UI Configuration
     MAX_ATTEMPTS = 30

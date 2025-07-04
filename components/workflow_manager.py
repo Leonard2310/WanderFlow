@@ -166,6 +166,27 @@ class WorkflowManager:
                     st.error(f"Error waiting for additional info task: {e}")
                     return None
     
+    def wait_for_choice_travel_city_task(self, wf_id: str) -> Optional[Dict[str, str]]:
+        """Wait for ChoiceTravelCity task - per viaggi brevi con 3 opzioni"""
+        with st.spinner("Elaboro opzioni di viaggio..."):
+            while True:
+                try:
+                    task = self.fetch_task_by_ref(wf_id, "ChoiceTravelCity")
+                    if task:
+                        # Gestisce sia input_data che inputData per compatibilità
+                        input_data = getattr(task, 'input_data', None) or getattr(task, 'inputData', None)
+                        if input_data and all(key in input_data for key in ["itinerary1", "itinerary2", "itinerary3"]):
+                            return {
+                                "itinerary1": input_data["itinerary1"],
+                                "itinerary2": input_data["itinerary2"], 
+                                "itinerary3": input_data["itinerary3"],
+                                "task_id": task.task_id
+                            }
+                    time.sleep(2)
+                except Exception as e:
+                    st.error(f"Error waiting for choice travel city task: {e}")
+                    return None
+    
     def terminate_workflow(self, wf_id: str, reason: str = "User terminated") -> bool:
         """Terminate a workflow"""
         try:

@@ -14,10 +14,16 @@ class SessionState:
         "pref_task_id": None,
         "show_task_id": None,
         "choice_task_id": None,
+        "choice_travel_city_task_id": None,  # NUOVO: per ChoiceTravelCity (viaggi brevi)
         "request_confirmation_task_id": None,  # NUOVO: per AskforAddInfo_ref come nel dashboard
         "show_more_info_task_id": None,  # NUOVO: per ShowMoreInformation task
         "confirmation_response": None,  # NUOVO: per la risposta Sì/No come nel dashboard
         "itinerary": None,
+        "travel_options": None,  # NUOVO: per le 3 opzioni di viaggio breve
+        "selected_travel_option": None,  # NUOVO: opzione selezionata dall'utente
+        "choice_task_completed": False,  # NUOVO: indica se il ChoiceTravelCity task è completato
+        "is_short_trip": False,  # NUOVO: indica se è un viaggio breve (≤3 giorni)
+        "trip_duration": None,  # NUOVO: durata del viaggio per determinare il flusso
         "extra_requested": False,
         "extra_info": None,
         "selected_country": "",
