@@ -8,8 +8,13 @@ tasks, processes travel preferences, and returns formatted prompts.
 
 import os
 import time
+import logging
 import requests
 from dotenv import load_dotenv
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load credentials from environment file
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'credentials.env'))
@@ -71,7 +76,7 @@ def main():
     When a task is received, it processes the travel preferences and
     generates an appropriate prompt for the itinerary creation.
     """
-    print("🔄 Python Worker started, polling every 2s...")
+    logger.info("🔄 Python Worker started, polling every 2s...")
     while True:
         task = poll_task()
         if task and task.get("taskId"):
@@ -79,7 +84,7 @@ def main():
             input_data = task.get("inputData", {})
             days = input_data.get("giorni", 3)
             preferences = input_data.get("preferenze", [])
-            print(f"✔️  Task {task_id} received, input={input_data}")
+            logger.info(f"✔️  Task {task_id} received, input={input_data}")
 
             # Generate prompt based on input parameters
             prompt = (
@@ -91,9 +96,9 @@ def main():
 
             # Complete the task with generated output
             if complete_task(task_id, output):
-                print(f"✅ Task {task_id} completed.")
+                logger.info(f"✅ Task {task_id} completed.")
             else:
-                print(f"❌ Error completing task {task_id}.")
+                logger.error(f"❌ Error completing task {task_id}.")
         else:
             # No tasks available, wait before next poll
             time.sleep(2)

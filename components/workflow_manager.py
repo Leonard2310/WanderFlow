@@ -6,6 +6,7 @@ including workflow execution, task management, and state monitoring.
 """
 
 import time
+import logging
 import streamlit as st
 from typing import Dict, Any, Optional
 
@@ -14,6 +15,9 @@ from conductor.client.orkes.orkes_task_client import OrkesTaskClient
 
 from config.app_config import AppConfig
 from utils.session_state import SessionState
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class WorkflowManager:
     """
@@ -138,7 +142,7 @@ class WorkflowManager:
                         return wf.output[key]
                     time.sleep(2)
                 except Exception as e:
-                    print(f"Warning while waiting for output: {e}")
+                    logger.warning(f"Warning while waiting for output: {e}")
                     time.sleep(2)
                     continue
     

@@ -5,25 +5,18 @@ This module provides functionality to generate enhanced PDF documents
 for travel itineraries with professional styling and formatting.
 """
 
-import uuid
-import os
 import re
 from io import BytesIO
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
-from reportlab.lib.pagesizes import A4, letter
-from reportlab.lib.units import inch, mm
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor, black, white, grey
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, Frame, NextPageTemplate, PageTemplate
-)
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 
 
 class PDFGenerator:

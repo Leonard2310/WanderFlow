@@ -700,18 +700,20 @@ class UIComponents:
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            if st.checkbox("🔧 Debug Mode", key="debug_mode_checkbox"):
-                debug_info = SessionState.get_debug_info()
-                st.json(debug_info)
-                
-                # Add workflow information if available
-                workflow_id = SessionState.get("workflow_id")
-                if workflow_id:
-                    from components.workflow_manager import WorkflowManager
-                    # Note: This requires access to the workflow_manager
-                    st.markdown("**Workflow Status:**")
-                    if st.button("🔍 Show Workflow Details", key="workflow_debug_btn"):
-                        st.json({"workflow_id": workflow_id})
+            # Optional debug mode (can be enabled for development)
+            # Uncomment the following lines to enable debug mode:
+            # if st.checkbox("🔧 Debug Mode", key="debug_mode_checkbox"):
+            #     debug_info = SessionState.get_debug_info()
+            #     st.json(debug_info)
+            #     
+            #     # Add workflow information if available
+            #     workflow_id = SessionState.get("workflow_id")
+            #     if workflow_id:
+            #         from components.workflow_manager import WorkflowManager
+            #         # Note: This requires access to the workflow_manager
+            #         st.markdown("**Workflow Status:**")
+            #         if st.button("🔍 Show Workflow Details", key="workflow_debug_btn"):
+            #             st.json({"workflow_id": workflow_id})
 
     @staticmethod
     def render_footer():
@@ -750,8 +752,11 @@ class UIComponents:
                 st.rerun()
 
         with col2:
-            if st.button("🔍 Show Debug Info", use_container_width=True):
-                st.json(SessionState.get_debug_info())
+            # Optional debug mode (disabled for production)
+            # Uncomment to enable debug information display:
+            # if st.button("🔍 Show Debug Info", use_container_width=True):
+            #     st.json(SessionState.get_debug_info())
+            pass  # Placeholder to maintain function structure
     
     @staticmethod
     def render_destination_types() -> List[str]:
