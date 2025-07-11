@@ -30,12 +30,12 @@ class PDFGenerator:
     
     # Color palette - WanderFlow brand colors
     COLORS = {
-        'primary': HexColor('#667eea'),        # WanderFlow primary blue
-        'secondary': HexColor('#764ba2'),      # WanderFlow secondary purple
+        'primary': HexColor('#4A69BD'),        # WanderFlow primary blue
+        'secondary': HexColor('#7A97E0'),      # WanderFlow secondary blue
         'accent': HexColor('#28a745'),         # Success green
         'text': HexColor('#2c3e50'),          # Dark text
         'light_blue': HexColor('#A1C4FD'),     # Light blue from gradient
-        'light_purple': HexColor('#C2E9FB'),   # Light purple from gradient
+        'light_purple': HexColor("#020203"),   # Light purple from gradient
         'light_grey': HexColor('#f8f9fa'),     # Light background
         'border': HexColor('#e9ecef'),         # Border color
         'white': HexColor('#ffffff')           # White

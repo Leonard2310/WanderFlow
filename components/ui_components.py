@@ -26,13 +26,14 @@ class UIComponents:
     def apply_custom_css():
         """
         Apply custom CSS styling to the Streamlit application.
-        Palette evocativa, animazioni fade-in, design pulito, headline coinvolgente, input arrotondati con ombra e icone, spaziature migliorate.
+        
+        Applies comprehensive styling including modern gradients, shadows,
+        rounded inputs, and responsive design elements for better UX.
         """
         st.markdown("""
         <style>
             /* General app styling */
             .stApp {
-                /* Sfondo più chiaro e freddo */
                 background: linear-gradient(135deg, #E0EAFB 0%, #F8FAFF 100%);
                 background-attachment: fixed;
                 color: #333333;
@@ -66,7 +67,7 @@ class UIComponents:
             /* Main header */
             .main-header {
                 text-align: center;
-                color: #4A69BD !important; /* Colore più professionale e coerente con la palette */
+                color: #4A69BD !important;
                 font-size: 2.5rem;
                 font-weight: bold;
                 margin-top: 0.5rem;
@@ -76,18 +77,15 @@ class UIComponents:
 
             /* Add dynamic, colored containers for sections */ 
             .section-container {
-                /* Nuovo stile per il container */
-                background: linear-gradient(145deg, #FFFFFF, #EAF3FF); //modificare il colore e togliere il gradiente
-                border-radius: 15px; /* Angoli più morbidi */
-                padding: 0.2rem; /* Più spazio interno */
+                background: linear-gradient(145deg, #FFFFFF, #EAF3FF);
+                border-radius: 15px;
+                padding: 0.2rem;
                 margin: 1rem 0;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* Ombra più profonda */
-                border: 1px solid rgba(161, 196, 253, 0.4); /* Bordo sottile e accattivante */
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                border: 1px solid rgba(161, 196, 253, 0.4);
             }
 
             /* Allow inline styles to work properly */
-
-            /* Buttons */
             .stButton > button {
                 width: 100%;
                 border-radius: 20px;
@@ -95,7 +93,7 @@ class UIComponents:
                 font-weight: bold;
                 transition: all 0.3s ease;
                 border: none;
-                background: linear-gradient(45deg, #4A69BD, #7A97E0); /* Palette più fredda e professionale */
+                background: linear-gradient(45deg, #7A97E0, #4A69BD); 
                 color: white !important;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
@@ -171,7 +169,7 @@ class UIComponents:
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
 
-            /* SPECIFIC FIX FOR DATE INPUT WHITE BACKGROUND */
+            /* Date input field styling */
             .stDateInput > div > div > div {
                 background-color: rgba(255, 255, 255, 0.95) !important;
                 border-radius: 8px !important;
@@ -179,7 +177,6 @@ class UIComponents:
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
 
-            /* Date input field itself */
             .stDateInput input[type="date"] {
                 background-color: rgba(255, 255, 255, 0.95) !important;
                 color: #000000 !important;
@@ -195,12 +192,10 @@ class UIComponents:
                 color: #000000 !important;
             }
 
-            /* Selectbox selected text */
             .stSelectbox > div > div > div {
                 color: #000000 !important;
             }
 
-            /* Number input text */
             .stNumberInput input[type="number"] {
                 color: #000000 !important;
             }
@@ -254,11 +249,11 @@ class UIComponents:
 
             /* Code block styling - subtle background for readability, compact spacing */
             .itinerary-container pre {
-                background-color: transparent; /* No extra background */
+                background-color: transparent;
                 border-radius: 10px;
                 padding: 0.75rem;
                 margin: 0.25rem 0;
-                border: none; /* No border */
+                border: none;
                 color: #2c3e50;
                 font-weight: 500;
                 text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
@@ -268,7 +263,7 @@ class UIComponents:
 
             /* Progress bar */
             .stProgress > div > div {
-                background: linear-gradient(45deg, #4A69BD, #7A97E0);
+                background: linear-gradient(45deg, #7A97E0, #4A69BD);
                 border-radius: 10px;
             }
 
@@ -297,7 +292,7 @@ class UIComponents:
                 background: transparent !important;
             }
 
-            /* White text for success messages and purple background elements */
+            /* Success messages styling */
             .stSuccess,
             .stSuccess > div,
             .stSuccess p,
@@ -315,10 +310,9 @@ class UIComponents:
                 text-shadow: 0px 1px 2px rgba(0,0,0,0.3) !important;
             }
 
-            /* Special styling for itinerary title - darker and more prominent */
+            /* Special styling for itinerary title */
             .stMarkdown h3:contains("Your Personalized Travel Itinerary"),
             .stMarkdown h3[id*="personalized"] {
-                /* Inline styles take precedence */
             }
 
             /* Reduce spacing between elements - ultra compact */
@@ -332,7 +326,7 @@ class UIComponents:
                 padding: 0.05rem !important;
             }
 
-            /* Compact form elements - reduced margins to minimum */
+            /* Compact form elements */
             .stSelectbox,
             .stNumberInput,
             .stDateInput,
@@ -379,7 +373,6 @@ class UIComponents:
 
             /* Reduce spacing in sections */
             .section-container {
-                /* Keep existing styles */
             }
 
             /* More compact headers */
@@ -423,7 +416,7 @@ class UIComponents:
             /* Country selection grouped styling */
             .stSelectbox option[data-testid*="continent"] {
                 font-weight: bold !important;
-                background: linear-gradient(45deg, #4A69BD, #7A97E0) !important;
+                background: linear-gradient(45deg, #7A97E0, #4A69BD);
                 color: white !important;
                 padding: 0.5rem !important;
                 border-bottom: 1px solid #ddd !important;
@@ -472,7 +465,7 @@ class UIComponents:
                 margin-left: 0.5rem !important;
             }
 
-            /* Completion banner - highest priority styles */
+            /* Completion banner styling */
             .completion-banner,
             .completion-banner *,
             .completion-banner h3,
@@ -483,7 +476,6 @@ class UIComponents:
                 text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
             }
 
-            /* Override any other styles that might interfere */
             div.completion-banner h3.completion-title,
             div.completion-banner p.completion-text {
                 color: #FFFFFF !important;
@@ -503,19 +495,6 @@ class UIComponents:
             }
         </style>
         """, unsafe_allow_html=True)
-
-    @staticmethod
-    def render_header():
-        """
-        Render the main application header.
-        
-        Displays the WanderFlow application title with custom styling
-        using the configured app title from AppConfig.
-        """
-        st.markdown(
-            f'<h1 class="main-header">{AppConfig.APP_TITLE}</h1>',
-            unsafe_allow_html=True
-        )
 
     @staticmethod
     def render_header():
@@ -703,21 +682,6 @@ class UIComponents:
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            # Optional debug mode (can be enabled for development)
-            # Uncomment the following lines to enable debug mode:
-            # if st.checkbox("🔧 Debug Mode", key="debug_mode_checkbox"):
-            #     debug_info = SessionState.get_debug_info()
-            #     st.json(debug_info)
-            #     
-            #     # Add workflow information if available
-            #     workflow_id = SessionState.get("workflow_id")
-            #     if workflow_id:
-            #         from components.workflow_manager import WorkflowManager
-            #         # Note: This requires access to the workflow_manager
-            #         st.markdown("**Workflow Status:**")
-            #         if st.button("🔍 Show Workflow Details", key="workflow_debug_btn"):
-            #             st.json({"workflow_id": workflow_id})
-
     @staticmethod
     def render_footer():
         """
@@ -755,11 +719,7 @@ class UIComponents:
                 st.rerun()
 
         with col2:
-            # Optional debug mode (disabled for production)
-            # Uncomment to enable debug information display:
-            # if st.button("🔍 Show Debug Info", use_container_width=True):
-            #     st.json(SessionState.get_debug_info())
-            pass  # Placeholder to maintain function structure
+            pass
     
     @staticmethod
     def render_destination_types() -> List[str]:
@@ -873,7 +833,5 @@ class UIComponents:
             itinerary_text (str): The itinerary content to display
         """
         with st.container():
-            st.markdown('<div class="itinerary-container">', unsafe_allow_html=True)
-            st.markdown("**📋 Your Travel Plan:**")
             st.code(itinerary_text, language="json" if itinerary_text.strip().startswith(("{", "[")) else "text")
             st.markdown('</div>', unsafe_allow_html=True)
