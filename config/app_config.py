@@ -26,7 +26,7 @@ class AppConfig:
 
     # Workflow configuration settings
     WORKFLOW_NAME = "WanderFlow"
-    WORKFLOW_VERSION = 28
+    WORKFLOW_VERSION = 29
 
     # User interface configuration
     MAX_ATTEMPTS = 30
