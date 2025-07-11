@@ -26,21 +26,17 @@ class UIComponents:
     def apply_custom_css():
         """
         Apply custom CSS styling to the Streamlit application.
-        
-        Includes comprehensive styling for:
-        - Application background and layout
-        - Form elements and inputs
-        - Buttons and interactive components
-        - Step indicators and progress elements
-        - Responsive design and spacing
+        Palette evocativa, animazioni fade-in, design pulito, headline coinvolgente, input arrotondati con ombra e icone, spaziature migliorate.
         """
         st.markdown("""
         <style>
             /* General app styling */
             .stApp {
-                background: linear-gradient(135deg, #A1C4FD 0%, #C2E9FB 100%);
+                /* Sfondo più chiaro e freddo */
+                background: linear-gradient(135deg, #E0EAFB 0%, #F8FAFF 100%);
                 background-attachment: fixed;
                 color: #333333;
+                font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             }
 
             /* Remove default Streamlit padding and margins */
@@ -70,7 +66,7 @@ class UIComponents:
             /* Main header */
             .main-header {
                 text-align: center;
-                color: #764ba2 !important;
+                color: #4A69BD !important; /* Colore più professionale e coerente con la palette */
                 font-size: 2.5rem;
                 font-weight: bold;
                 margin-top: 0.5rem;
@@ -78,14 +74,15 @@ class UIComponents:
                 text-shadow: 0px 2px 4px rgba(255,255,255,0.8);
             }
 
-            /* Remove white container backgrounds - make transparent */
+            /* Add dynamic, colored containers for sections */ 
             .section-container {
-                background: transparent !important;
-                border-radius: 0px;
-                padding: 0.25rem 0;
-                margin: 0.25rem 0;
-                box-shadow: none;
-                border-left: none;
+                /* Nuovo stile per il container */
+                background: linear-gradient(145deg, #FFFFFF, #EAF3FF); //modificare il colore e togliere il gradiente
+                border-radius: 15px; /* Angoli più morbidi */
+                padding: 0.2rem; /* Più spazio interno */
+                margin: 1rem 0;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* Ombra più profonda */
+                border: 1px solid rgba(161, 196, 253, 0.4); /* Bordo sottile e accattivante */
             }
 
             /* Allow inline styles to work properly */
@@ -98,14 +95,15 @@ class UIComponents:
                 font-weight: bold;
                 transition: all 0.3s ease;
                 border: none;
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #4A69BD, #7A97E0); /* Palette più fredda e professionale */
                 color: white !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
 
             .stButton > button:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                background: linear-gradient(45deg, #764ba2, #667eea);
+                background: linear-gradient(45deg, #7A97E0, #4A69BD);
             }
 
             /* Step indicator */
@@ -131,8 +129,9 @@ class UIComponents:
             }
 
             .step.active {
-                background: #667eea;
+                background: #4A69BD;
                 color: white;
+                box-shadow: 0 4px 12px rgba(74, 105, 189, 0.4);
             }
 
             .step.completed {
@@ -168,7 +167,7 @@ class UIComponents:
             .stTextInput > div > div {
                 background-color: rgba(255, 255, 255, 0.95) !important;
                 border-radius: 8px !important;
-                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                border: 1px solid rgba(161, 196, 253, 0.3) !important;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
 
@@ -176,7 +175,7 @@ class UIComponents:
             .stDateInput > div > div > div {
                 background-color: rgba(255, 255, 255, 0.95) !important;
                 border-radius: 8px !important;
-                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                border: 1px solid rgba(161, 196, 253, 0.3) !important;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
 
@@ -206,13 +205,11 @@ class UIComponents:
                 color: #000000 !important;
             }
 
-            /* Checkbox styling removed to avoid conflicts with Streamlit defaults */
-
             /* Selectbox dropdown */
             div[data-baseweb="popover"] > div > ul {
                 background-color: rgba(255, 255, 255, 0.98) !important;
                 border-radius: 8px !important;
-                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                border: 1px solid rgba(161, 196, 253, 0.3) !important;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             }
 
@@ -237,30 +234,31 @@ class UIComponents:
             }
 
             .sidebar-section-container h3 {
-                color: #667eea !important;
+                color: #4A69BD !important;
             }
 
-            .sidebar-section-container p, 
+            .sidebar-section-container p,
             .sidebar-section-container strong {
                 color: #555555 !important;
             }
 
-            /* Itinerary display - transparent background to show gradient, no spacing */
+            /* Itinerary display - add a light background for clarity */
             .itinerary-container {
-                background: transparent !important;
-                border-radius: 0px;
-                padding: 0rem !important;
-                margin: 0rem !important;
-                box-shadow: none !important;
+                background: linear-gradient(145deg, #F0F5FF, #FFFFFF);
+                border-radius: 15px;
+                padding: 1.5rem !important;
+                margin: 1rem 0 !important;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                border: 1px solid rgba(161, 196, 253, 0.4);
             }
 
             /* Code block styling - subtle background for readability, compact spacing */
             .itinerary-container pre {
-                background-color: rgba(255, 255, 255, 0.1);
+                background-color: transparent; /* No extra background */
                 border-radius: 10px;
                 padding: 0.75rem;
                 margin: 0.25rem 0;
-                border: 1px solid rgba(255, 255, 255, 0.2);
+                border: none; /* No border */
                 color: #2c3e50;
                 font-weight: 500;
                 text-shadow: 0px 1px 2px rgba(255,255,255,0.8);
@@ -270,7 +268,7 @@ class UIComponents:
 
             /* Progress bar */
             .stProgress > div > div {
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background: linear-gradient(45deg, #4A69BD, #7A97E0);
                 border-radius: 10px;
             }
 
@@ -298,8 +296,6 @@ class UIComponents:
             .stMarkdown > div {
                 background: transparent !important;
             }
-
-            /* Removed global color forcing to allow inline styles to work */
 
             /* White text for success messages and purple background elements */
             .stSuccess,
@@ -383,12 +379,7 @@ class UIComponents:
 
             /* Reduce spacing in sections */
             .section-container {
-                background: transparent !important;
-                border-radius: 0px;
-                padding: 0.1rem 0 !important;
-                margin: 0.1rem 0 !important;
-                box-shadow: none;
-                border-left: none;
+                /* Keep existing styles */
             }
 
             /* More compact headers */
@@ -432,7 +423,7 @@ class UIComponents:
             /* Country selection grouped styling */
             .stSelectbox option[data-testid*="continent"] {
                 font-weight: bold !important;
-                background: linear-gradient(45deg, #667eea, #764ba2) !important;
+                background: linear-gradient(45deg, #4A69BD, #7A97E0) !important;
                 color: white !important;
                 padding: 0.5rem !important;
                 border-bottom: 1px solid #ddd !important;
@@ -445,7 +436,7 @@ class UIComponents:
             }
 
             .stSelectbox option:hover {
-                background-color: rgba(102, 126, 234, 0.1) !important;
+                background-color: rgba(74, 105, 189, 0.1) !important;
             }
 
             /* Better spacing for grouped selectbox */
@@ -475,9 +466,9 @@ class UIComponents:
             }
 
             /* Improve visual separation between continents and countries */
-            div[data-baseweb="popover"] > div > ul > li[aria-label*="   "] {
+            div[data-baseweb="popover"] > div > ul > li[aria-label*="   "] {
                 padding-left: 1rem !important;
-                border-left: 3px solid #667eea !important;
+                border-left: 3px solid #4A69BD !important;
                 margin-left: 0.5rem !important;
             }
 
@@ -510,9 +501,21 @@ class UIComponents:
                 color: #FFFFFF !important;
                 text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
             }
-
         </style>
         """, unsafe_allow_html=True)
+
+    @staticmethod
+    def render_header():
+        """
+        Render the main application header.
+        
+        Displays the WanderFlow application title with custom styling
+        using the configured app title from AppConfig.
+        """
+        st.markdown(
+            f'<h1 class="main-header">{AppConfig.APP_TITLE}</h1>',
+            unsafe_allow_html=True
+        )
 
     @staticmethod
     def render_header():
