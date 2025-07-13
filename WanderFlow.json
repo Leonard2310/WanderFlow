@@ -1,0 +1,863 @@
+{
+  "ownerApp": "georgecj11@gmail.com",
+  "createTime": 1751795200826,
+  "updateTime": 1752245081487,
+  "name": "WanderFlow",
+  "description": "AI-Powered Travel Planning System",
+  "version": 29,
+  "tasks": [
+    {
+      "name": "UserPreferences",
+      "taskReferenceName": "UserPreferences",
+      "inputParameters": {},
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "taskDefinition": {
+        "createTime": 0,
+        "updateTime": 0,
+        "retryCount": 3,
+        "timeoutSeconds": 0,
+        "inputKeys": [],
+        "outputKeys": [],
+        "timeoutPolicy": "TIME_OUT_WF",
+        "retryLogic": "FIXED",
+        "retryDelaySeconds": 60,
+        "responseTimeoutSeconds": 3600,
+        "inputTemplate": {},
+        "rateLimitPerFrequency": 0,
+        "rateLimitFrequencyInSeconds": 1,
+        "backoffScaleFactor": 1,
+        "totalTimeoutSeconds": 0,
+        "enforceSchema": true
+      },
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": true,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "TripDecision",
+      "taskReferenceName": "TripDecision",
+      "inputParameters": {
+        "user_data": "${UserPreferences.output}"
+      },
+      "type": "SWITCH",
+      "decisionCases": {
+        "short_trip": [
+          {
+            "name": "Prompt3CitiesFar",
+            "taskReferenceName": "Prompt3CitiesFar",
+            "inputParameters": {
+              "uri": "https://openrouter.ai/api/v1/chat/completions",
+              "method": "POST",
+              "headers": {
+                "Authorization": "",
+                "Referer": "https://yourdomain.com"
+              },
+              "contentType": "application/json",
+              "accept": "application/json",
+              "encode": true,
+              "body": {
+                "model": "mistralai/mistral-7b-instruct",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "You are a travel planner AI. Your only task is to return a JSON array of 3 city names. **Strictly base your suggestions on the following user preferences, provided as a list of keywords: ${UserPreferences.output.preferences}.** Do not include any explanations or extra text. Output format example: [\"Paris\", \"Rome\", \"Berlin\"]"
+                  },
+                  {
+                    "role": "user",
+                    "content": "Generate 3 distant European cities for a ${UserPreferences.output.durata}-day trip. **Ensure these cities strictly align with the user's preferences: ${UserPreferences.output.preferences}.**"
+                  }
+                ]
+              }
+            },
+            "type": "HTTP",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "retryCount": 2,
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "Fork_Cities3",
+            "taskReferenceName": "Fork_Cities3",
+            "inputParameters": {},
+            "type": "FORK_JOIN",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [
+              [
+                {
+                  "name": "DoWhile_ItineraryCity1",
+                  "taskReferenceName": "DoWhile_ItineraryCity1",
+                  "inputParameters": {},
+                  "type": "DO_WHILE",
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "forkTasks": [],
+                  "startDelay": 0,
+                  "joinOn": [],
+                  "optional": false,
+                  "defaultExclusiveJoinTask": [],
+                  "asyncComplete": false,
+                  "loopCondition": "if ($.ValidateItineraryCity1.response.body.choices[0].message.content == 'NO') { true } else { false }",
+                  "loopOver": [
+                    {
+                      "name": "ItineraryCity1",
+                      "taskReferenceName": "ItineraryCity1",
+                      "inputParameters": {
+                        "uri": "https://openrouter.ai/api/v1/chat/completions",
+                        "method": "POST",
+                        "headers": {
+                          "Authorization": "",
+                          "Referer": "https://yourdomain.com"
+                        },
+                        "contentType": "application/json",
+                        "accept": "application/json",
+                        "encode": true,
+                        "body": {
+                          "model": "mistralai/mistral-7b-instruct",
+                          "messages": [
+                            {
+                              "role": "system",
+                              "content": "You are a travel planner AI. Create a ${UserPreferences.output.durata}-day itinerary. **Crucially, prioritize user preferences given as a list of keywords: ${UserPreferences.output.preferences}.** Make sure the itinerary is coherent and well-structured. Do not include any explanations or extra text outside the itinerary. Do not include any explanations or extra text outside the itinerary. The itinerary should focus on a single city and its attractions, potentially including places within a 50km radius of that city. Avoid using bold or italics."
+                            },
+                            {
+                              "role": "user",
+                              "content": "Create a **${UserPreferences.output.durata}-day itinerary** for ${Prompt3CitiesFar.output.choices[0].message.content[2]}. Strictly consider these user preferences: ${UserPreferences.output.preferences}. The itinerary should focus on this city and attractions within a 50km radius."
+                            }
+                          ]
+                        }
+                      },
+                      "type": "HTTP",
+                      "decisionCases": {},
+                      "defaultCase": [],
+                      "forkTasks": [],
+                      "startDelay": 0,
+                      "joinOn": [],
+                      "optional": false,
+                      "defaultExclusiveJoinTask": [],
+                      "asyncComplete": false,
+                      "loopOver": [],
+                      "retryCount": 2,
+                      "onStateChange": {},
+                      "permissive": false
+                    },
+                    {
+                      "name": "ValidateItineraryCity1",
+                      "taskReferenceName": "ValidateItineraryCity1",
+                      "inputParameters": {
+                        "uri": "https://openrouter.ai/api/v1/chat/completions",
+                        "method": "POST",
+                        "headers": {
+                          "Authorization": "",
+                          "Referer": "https://yourdomain.com"
+                        },
+                        "contentType": "application/json",
+                        "accept": "application/json",
+                        "encode": true,
+                        "body": {
+                          "model": "mistralai/mistral-7b-instruct",
+                          "messages": [
+                            {
+                              "role": "system",
+                              "content": "You are a quality control assistant for travel itineraries. Your **ONLY** task is to assess if a given itinerary is coherent, well-structured, and **strictly adheres to specific user preferences and duration.** You **MUST** respond with **ONLY** 'YES' if all conditions are met, or **ONLY** 'NO' if any condition is not met. Do not add any other text, explanations, or punctuation."
+                            },
+                            {
+                              "role": "user",
+                              "content": "Assess the following itinerary:\n\n---\nITINERARY:\n${ItineraryCity1.output.choices[0].message.content}\n---\n\nDuration: ${UserPreferences.output.durata} days\nUser Preferences: ${UserPreferences.output.preferences}\n\nBased on the ITINERARY, DURATION, and USER PREFERENCES, is this itinerary coherent, well-structured, and does it strictly adhere to the user's stated preferences for the given duration? Respond with ONLY 'YES' or ONLY 'NO'."
+                            }
+                          ]
+                        }
+                      },
+                      "type": "HTTP",
+                      "decisionCases": {},
+                      "defaultCase": [],
+                      "forkTasks": [],
+                      "startDelay": 0,
+                      "joinOn": [],
+                      "optional": false,
+                      "defaultExclusiveJoinTask": [],
+                      "asyncComplete": false,
+                      "loopOver": [],
+                      "retryCount": 1,
+                      "onStateChange": {},
+                      "permissive": false
+                    }
+                  ],
+                  "onStateChange": {},
+                  "permissive": false
+                }
+              ],
+              [
+                {
+                  "name": "DoWhile_ItineraryCity2",
+                  "taskReferenceName": "DoWhile_ItineraryCity2",
+                  "inputParameters": {},
+                  "type": "DO_WHILE",
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "forkTasks": [],
+                  "startDelay": 0,
+                  "joinOn": [],
+                  "optional": false,
+                  "defaultExclusiveJoinTask": [],
+                  "asyncComplete": false,
+                  "loopCondition": "if ($.ValidateItineraryCity2.response.body.choices[0].message.content == 'NO') { true } else { false }",
+                  "loopOver": [
+                    {
+                      "name": "ItineraryCity2",
+                      "taskReferenceName": "ItineraryCity2",
+                      "inputParameters": {
+                        "uri": "https://openrouter.ai/api/v1/chat/completions",
+                        "method": "POST",
+                        "headers": {
+                          "Authorization": "",
+                          "Referer": "https://yourdomain.com"
+                        },
+                        "contentType": "application/json",
+                        "accept": "application/json",
+                        "encode": true,
+                        "body": {
+                          "model": "mistralai/mistral-7b-instruct",
+                          "messages": [
+                            {
+                              "role": "system",
+                              "content": "You are a travel planner AI. Create a ${UserPreferences.output.durata}-day itinerary. **Crucially, prioritize user preferences given as a list of keywords: ${UserPreferences.output.preferences}.** Make sure the itinerary is coherent and well-structured. Do not include any explanations or extra text outside the itinerary. Do not include any explanations or extra text outside the itinerary. The itinerary should focus on a single city and its attractions, potentially including places within a 50km radius of that city. Avoid using bold or italics."
+                            },
+                            {
+                              "role": "user",
+                              "content": "Create a **${UserPreferences.output.durata}-day itinerary** for ${Prompt3CitiesFar.output.choices[0].message.content[1]}. Strictly consider these user preferences: ${UserPreferences.output.preferences}. The itinerary should focus on this city and attractions within a 50km radius."
+                            }
+                          ]
+                        }
+                      },
+                      "type": "HTTP",
+                      "decisionCases": {},
+                      "defaultCase": [],
+                      "forkTasks": [],
+                      "startDelay": 0,
+                      "joinOn": [],
+                      "optional": false,
+                      "defaultExclusiveJoinTask": [],
+                      "asyncComplete": false,
+                      "loopOver": [],
+                      "retryCount": 2,
+                      "onStateChange": {},
+                      "permissive": false
+                    },
+                    {
+                      "name": "ValidateItineraryCity2",
+                      "taskReferenceName": "ValidateItineraryCity2",
+                      "inputParameters": {
+                        "uri": "https://openrouter.ai/api/v1/chat/completions",
+                        "method": "POST",
+                        "headers": {
+                          "Authorization": "",
+                          "Referer": "https://yourdomain.com"
+                        },
+                        "contentType": "application/json",
+                        "accept": "application/json",
+                        "encode": true,
+                        "body": {
+                          "model": "mistralai/mistral-7b-instruct",
+                          "messages": [
+                            {
+                              "role": "system",
+                              "content": "You are a quality control assistant for travel itineraries. Your **ONLY** task is to assess if a given itinerary is coherent, well-structured, and **strictly adheres to specific user preferences and duration.** You **MUST** respond with **ONLY** 'YES' if all conditions are met, or **ONLY** 'NO' if any condition is not met. Do not add any other text, explanations, or punctuation."
+                            },
+                            {
+                              "role": "user",
+                              "content": "Assess the following itinerary:\n\n---\nITINERARY:\n${ItineraryCity2.output.choices[0].message.content}\n---\n\nDuration: ${UserPreferences.output.durata} days\nUser Preferences: ${UserPreferences.output.preferences}\n\nBased on the ITINERARY, DURATION, and USER PREFERENCES, is this itinerary coherent, well-structured, and does it strictly adhere to the user's stated preferences for the given duration? Respond with ONLY 'YES' or ONLY 'NO'."
+                            }
+                          ]
+                        }
+                      },
+                      "type": "HTTP",
+                      "decisionCases": {},
+                      "defaultCase": [],
+                      "forkTasks": [],
+                      "startDelay": 0,
+                      "joinOn": [],
+                      "optional": false,
+                      "defaultExclusiveJoinTask": [],
+                      "asyncComplete": false,
+                      "loopOver": [],
+                      "retryCount": 1,
+                      "onStateChange": {},
+                      "permissive": false
+                    }
+                  ],
+                  "onStateChange": {},
+                  "permissive": false
+                }
+              ],
+              [
+                {
+                  "name": "DoWhile_ItineraryCity3",
+                  "taskReferenceName": "DoWhile_ItineraryCity3",
+                  "inputParameters": {},
+                  "type": "DO_WHILE",
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "forkTasks": [],
+                  "startDelay": 0,
+                  "joinOn": [],
+                  "optional": false,
+                  "defaultExclusiveJoinTask": [],
+                  "asyncComplete": false,
+                  "loopCondition": "if ($.ValidateItineraryCity3.response.body.choices[0].message.content == 'NO') { true } else { false }",
+                  "loopOver": [
+                    {
+                      "name": "ItineraryCity3",
+                      "taskReferenceName": "ItineraryCity3",
+                      "inputParameters": {
+                        "uri": "https://openrouter.ai/api/v1/chat/completions",
+                        "method": "POST",
+                        "headers": {
+                          "Authorization": "",
+                          "Referer": "https://yourdomain.com"
+                        },
+                        "contentType": "application/json",
+                        "accept": "application/json",
+                        "encode": true,
+                        "body": {
+                          "model": "mistralai/mistral-7b-instruct",
+                          "messages": [
+                            {
+                              "role": "system",
+                              "content": "You are a travel planner AI. Create a ${UserPreferences.output.durata}-day itinerary. **Crucially, prioritize user preferences given as a list of keywords: ${UserPreferences.output.preferences}.** Make sure the itinerary is coherent and well-structured. Do not include any explanations or extra text outside the itinerary. The itinerary should focus on a single city and its attractions, potentially including places within a 50km radius of that city. Avoid using bold or italics."
+                            },
+                            {
+                              "role": "user",
+                              "content": "Create a **${UserPreferences.output.durata}-day itinerary** for ${Prompt3CitiesFar.output.choices[0].message.content[0]}. Strictly consider these user preferences: ${UserPreferences.output.preferences}. The itinerary should focus on this city and attractions within a 50km radius. Avoid using bold or italics."
+                            }
+                          ]
+                        }
+                      },
+                      "type": "HTTP",
+                      "decisionCases": {},
+                      "defaultCase": [],
+                      "forkTasks": [],
+                      "startDelay": 0,
+                      "joinOn": [],
+                      "optional": false,
+                      "defaultExclusiveJoinTask": [],
+                      "asyncComplete": false,
+                      "loopOver": [],
+                      "retryCount": 2,
+                      "onStateChange": {},
+                      "permissive": false
+                    },
+                    {
+                      "name": "ValidateItineraryCity3",
+                      "taskReferenceName": "ValidateItineraryCity3",
+                      "inputParameters": {
+                        "uri": "https://openrouter.ai/api/v1/chat/completions",
+                        "method": "POST",
+                        "headers": {
+                          "Authorization": "",
+                          "Referer": "https://yourdomain.com"
+                        },
+                        "contentType": "application/json",
+                        "accept": "application/json",
+                        "encode": true,
+                        "body": {
+                          "model": "mistralai/mistral-7b-instruct",
+                          "messages": [
+                            {
+                              "role": "system",
+                              "content": "You are a quality control assistant for travel itineraries. Your **ONLY** task is to assess if a given itinerary is coherent, well-structured, and **strictly adheres to specific user preferences and duration.** You **MUST** respond with **ONLY** 'YES' if all conditions are met, or **ONLY** 'NO' if any condition is not met. Do not add any other text, explanations, or punctuation."
+                            },
+                            {
+                              "role": "user",
+                              "content": "Assess the following itinerary:\n\n---\nITINERARY:\n${ItineraryCity3.output.choices[0].message.content}\n---\n\nDuration: ${UserPreferences.output.durata} days\nUser Preferences: ${UserPreferences.output.preferences}\n\nBased on the ITINERARY, DURATION, and USER PREFERENCES, is this itinerary coherent, well-structured, and does it strictly adhere to the user's stated preferences for the given duration? Respond with ONLY 'YES' or ONLY 'NO'."
+                            }
+                          ]
+                        }
+                      },
+                      "type": "HTTP",
+                      "decisionCases": {},
+                      "defaultCase": [],
+                      "forkTasks": [],
+                      "startDelay": 0,
+                      "joinOn": [],
+                      "optional": false,
+                      "defaultExclusiveJoinTask": [],
+                      "asyncComplete": false,
+                      "loopOver": [],
+                      "retryCount": 1,
+                      "onStateChange": {},
+                      "permissive": false
+                    }
+                  ],
+                  "onStateChange": {},
+                  "permissive": false
+                }
+              ]
+            ],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "Join_3Cities",
+            "taskReferenceName": "Join_3Cities",
+            "inputParameters": {},
+            "type": "JOIN",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [
+              "DoWhile_ItineraryCity1",
+              "DoWhile_ItineraryCity2",
+              "DoWhile_ItineraryCity3"
+            ],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "ChoiceTravelCity",
+            "taskReferenceName": "ChoiceTravelCity",
+            "inputParameters": {
+              "itinerary1": "${DoWhile_ItineraryCity1.output.1.ItineraryCity1.response.body.choices[0].message.content}",
+              "itinerary2": "${DoWhile_ItineraryCity2.output.1.ItineraryCity2.response.body.choices[0].message.content}",
+              "itinerary3": "${DoWhile_ItineraryCity3.output.1.ItineraryCity3.response.body.choices[0].message.content}",
+              "cities": "${Prompt3CitiesFar.output.response.body.choices[0].message.content}",
+              "user_preferences": "${UserPreferences.output.preferences}",
+              "duration": "${UserPreferences.output.durata}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": true,
+            "loopOver": [],
+            "retryCount": 3,
+            "onStateChange": {},
+            "permissive": false
+          }
+        ],
+        "long_trip": [
+          {
+            "name": "Prompt3CitiesNear",
+            "taskReferenceName": "Prompt3CitiesNear",
+            "inputParameters": {
+              "uri": "https://openrouter.ai/api/v1/chat/completions",
+              "method": "POST",
+              "accept": "application/json",
+              "contentType": "application/json",
+              "encode": true,
+              "headers": {
+                "Authorization": "",
+                "Referer": "https://yourdomain.com"
+              },
+              "body": {
+                "model": "mistralai/mistral-7b-instruct",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "You are a travel planner. Your only task is to return a comma-separated list of 3 city names that are geographically close and belong to the same region. **Strictly base your suggestion on the following user preferences, provided as a list of keywords: ${UserPreferences.output.preferences}.** Do not include any explanations or extra text. Output format example: Naples, Sorrento, Amalfi"
+                  },
+                  {
+                    "role": "user",
+                    "content": "Generate 3 nearby cities in the same region for a ${UserPreferences.output.durata}-day trip. **Ensure they strictly align with user preferences: ${UserPreferences.output.preferences}.**"
+                  }
+                ]
+              }
+            },
+            "type": "HTTP",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopOver": [],
+            "retryCount": 2,
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "DoWhile_ItineraryRegionTrip",
+            "taskReferenceName": "DoWhile_ItineraryRegionTrip",
+            "inputParameters": {},
+            "type": "DO_WHILE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopCondition": "if ($.ValidateItineraryRegionTrip.response.body.choices[0].message.content == 'YES') { true } else { false }",
+            "loopOver": [
+              {
+                "name": "ItineraryRegionTrip",
+                "taskReferenceName": "ItineraryRegionTrip",
+                "inputParameters": {
+                  "uri": "https://openrouter.ai/api/v1/chat/completions",
+                  "method": "POST",
+                  "accept": "application/json",
+                  "contentType": "application/json",
+                  "encode": true,
+                  "headers": {
+                    "Authorization": "",
+                    "Referer": "https://yourdomain.com"
+                  },
+                  "body": {
+                    "model": "mistralai/mistral-7b-instruct",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a travel planner AI. Create a detailed ${UserPreferences.output.durata}-day itinerary. **Crucially, prioritize user preferences provided as a list of keywords: ${UserPreferences.output.preferences}.** Make sure the itinerary is coherent and well-structured, covering the specified cities and duration. Do not include any explanations or extra text outside the itinerary. Avoid using bold or italics."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Create a ${UserPreferences.output.durata}-day itinerary that includes ${Prompt3CitiesNear.output.response.body.choices[0].message.content}. **Strictly adhere to these user preferences: ${UserPreferences.output.preferences}.**"
+                      }
+                    ]
+                  }
+                },
+                "type": "HTTP",
+                "decisionCases": {},
+                "defaultCase": [],
+                "forkTasks": [],
+                "startDelay": 0,
+                "joinOn": [],
+                "optional": false,
+                "defaultExclusiveJoinTask": [],
+                "asyncComplete": false,
+                "loopOver": [],
+                "retryCount": 2,
+                "onStateChange": {},
+                "permissive": false
+              },
+              {
+                "name": "ValidateItineraryRegionTrip",
+                "taskReferenceName": "ValidateItineraryRegionTrip",
+                "inputParameters": {
+                  "uri": "https://openrouter.ai/api/v1/chat/completions",
+                  "method": "POST",
+                  "contentType": "application/json",
+                  "accept": "application/json",
+                  "encode": true,
+                  "headers": {
+                    "Authorization": "",
+                    "Referer": "https://yourdomain.com"
+                  },
+                  "body": {
+                    "model": "mistralai/mistral-7b-instruct",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a quality control assistant for travel itineraries. Your **ONLY** task is to assess if a given itinerary is coherent, well-structured, and **strictly adheres to specific user preferences and duration.** You **MUST** respond with **ONLY** 'YES' if all conditions are met, or **ONLY** 'NO' if any condition is not met. Do not add any other text, explanations, or punctuation."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Assess the following itinerary:\n\n---\nITINERARY:\n${ItineraryRegionTrip.output.choices[0].message.content}\n---\n\nDuration: ${UserPreferences.output.durata} days\nUser Preferences: ${UserPreferences.output.preferences}\n\nBased on the ITINERARY, DURATION, and USER PREFERENCES, is this itinerary coherent, well-structured, and does it strictly adhere to the user's stated preferences for the given duration? Respond with ONLY 'YES' or ONLY 'NO'."
+                      }
+                    ]
+                  }
+                },
+                "type": "HTTP",
+                "decisionCases": {},
+                "defaultCase": [],
+                "forkTasks": [],
+                "startDelay": 0,
+                "joinOn": [],
+                "optional": false,
+                "defaultExclusiveJoinTask": [],
+                "asyncComplete": false,
+                "loopOver": [],
+                "retryCount": 1,
+                "onStateChange": {},
+                "permissive": false
+              }
+            ],
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "ShowItinerary",
+            "taskReferenceName": "ShowItinerary",
+            "inputParameters": {
+              "itinerary": "${ItineraryRegionTrip.output.response.body.choices[0].message.content}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": true,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ]
+      },
+      "defaultCase": [
+        {
+          "name": "LogUnhandledDuration",
+          "taskReferenceName": "LogUnhandledDuration",
+          "inputParameters": {
+            "message": "Durata non gestita. Il valore era: ${UserPreferences.output.durata}. Nessun itinerario generato."
+          },
+          "type": "SIMPLE",
+          "decisionCases": {},
+          "defaultCase": [],
+          "forkTasks": [],
+          "startDelay": 0,
+          "joinOn": [],
+          "optional": false,
+          "defaultExclusiveJoinTask": [],
+          "asyncComplete": false,
+          "loopOver": [],
+          "onStateChange": {},
+          "permissive": false
+        }
+      ],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "evaluatorType": "javascript",
+      "expression": "var durata = $.user_data.durata; if (Number(durata) <= 3) { 'short_trip' } else if (Number(durata) >= 5) { 'long_trip' } else { 'unmanaged_duration' }",
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "AskforAddInfo",
+      "taskReferenceName": "AskforAddInfo_ref",
+      "inputParameters": {},
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": true,
+      "loopOver": [],
+      "evaluatorType": "javascript",
+      "expression": "",
+      "onStateChange": {},
+      "permissive": false
+    },
+    {
+      "name": "TripSuggestionDecision",
+      "taskReferenceName": "TripSuggestionDecision",
+      "inputParameters": {
+        "switchCaseValue": "${AskforAddInfo_ref.output.user_choice}"
+      },
+      "type": "SWITCH",
+      "decisionCases": {
+        "yes": [
+          {
+            "name": "do_while",
+            "taskReferenceName": "do_while_ref",
+            "inputParameters": {},
+            "type": "DO_WHILE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": false,
+            "loopCondition": "if ($.ValidateSuggestion.output.response.body.choices[0].message.content == 'NO') { true } else { false }",
+            "loopOver": [
+              {
+                "name": "TravelReccomandation",
+                "taskReferenceName": "TravelReccomandation",
+                "inputParameters": {
+                  "uri": "https://openrouter.ai/api/v1/chat/completions",
+                  "method": "POST",
+                  "accept": "application/json",
+                  "contentType": "application/json",
+                  "encode": true,
+                  "headers": {
+                    "Authorization": "",
+                    "Referer": "https://yourdomain.com"
+                  },
+                  "body": {
+                    "model": "mistralai/mistral-7b-instruct",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a professional travel assistant. Your goal is to provide personalized, practical, and safety-focused travel guidance. When the user provides an itinerary, your response must strictly refer to the countries, cities, and dates mentioned. Your answer must include the following sections: 1) Documents, 2) Vaccinations, 3) Pre-bookings, 4) Weather, 5) Dining, and 6) Attractions. Use professional and precise language. Do not include generic advice—only information relevant to the specific trip described by the user. Do not assume the user's nationality or passport type under any circumstance. Avoid using bold or italics."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Here is my planned itinerary:\n${ChoiceTravelCity.output}\n${ItineraryRegionTrip.output.response.body.choices[0].message.content}\nPlease provide detailed and practical travel advice tailored to this trip, covering the following points:\n\n1. Required documents (visas, ID, travel insurance, etc.)\n2. Recommended or mandatory vaccinations\n3. What to book in advance (e.g., tickets, accommodation, transfers)\n4. Typical weather conditions for each location and period\n5. Local food and typical snacks\n6. Restaurant or street food recommendations\n7. Key attractions and unmissable experiences\n\nPlease ensure the advice is destination-specific and travel-ready."
+                      }
+                    ]
+                  }
+                },
+                "type": "HTTP",
+                "decisionCases": {},
+                "defaultCase": [],
+                "forkTasks": [],
+                "startDelay": 0,
+                "joinOn": [],
+                "optional": false,
+                "defaultExclusiveJoinTask": [],
+                "asyncComplete": false,
+                "loopOver": [],
+                "onStateChange": {},
+                "permissive": false
+              },
+              {
+                "name": "ValidateSuggestion",
+                "taskReferenceName": "ValidateSuggestion",
+                "inputParameters": {
+                  "uri": "https://openrouter.ai/api/v1/chat/completions",
+                  "method": "POST",
+                  "accept": "application/json",
+                  "contentType": "application/json",
+                  "encode": true,
+                  "headers": {
+                    "Authorization": "",
+                    "Referer": "https://yourdomain.com"
+                  },
+                  "body": {
+                    "model": "mistralai/mistral-7b-instruct",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a quality control assistant. Your sole task is to determine if the given travel suggestions are coherent, well-structured, and highly relevant to the provided cities and user needs (documents, vaccinations, bookings, weather, dining, attractions). Respond with 'YES' if they meet these criteria, otherwise 'NO'. Do not provide any other text or explanations."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Given the following travel suggestions: ${TravelReccomandation.output.response.body.choices[0].message.content}, are they coherent, well-structured, and highly relevant to the trip of that itinerary: ${TripDecision.output}? Answer YES or NO."
+                      }
+                    ]
+                  }
+                },
+                "type": "HTTP",
+                "decisionCases": {},
+                "defaultCase": [],
+                "forkTasks": [],
+                "startDelay": 0,
+                "joinOn": [],
+                "optional": false,
+                "defaultExclusiveJoinTask": [],
+                "asyncComplete": false,
+                "loopOver": [],
+                "onStateChange": {},
+                "permissive": false
+              }
+            ],
+            "evaluatorType": "value-param",
+            "onStateChange": {},
+            "permissive": false
+          },
+          {
+            "name": "ShowMoreInformation",
+            "taskReferenceName": "ShowMoreInformation",
+            "inputParameters": {
+              "itinerary": "${TravelReccomandation.output.response.body.choices[0].message.content}"
+            },
+            "type": "SIMPLE",
+            "decisionCases": {},
+            "defaultCase": [],
+            "forkTasks": [],
+            "startDelay": 0,
+            "joinOn": [],
+            "optional": false,
+            "defaultExclusiveJoinTask": [],
+            "asyncComplete": true,
+            "loopOver": [],
+            "onStateChange": {},
+            "permissive": false
+          }
+        ]
+      },
+      "defaultCase": [
+        {
+          "name": "TerminaWorkflowSuDefault",
+          "taskReferenceName": "TerminaWorkflowSuDefault_ref",
+          "inputParameters": {
+            "terminationStatus": "COMPLETED",
+            "workflowOutput": {
+              "message": "Scelta utente non valida o non presente. Workflow terminato."
+            }
+          },
+          "type": "TERMINATE",
+          "decisionCases": {},
+          "defaultCase": [],
+          "forkTasks": [],
+          "startDelay": 0,
+          "joinOn": [],
+          "optional": false,
+          "defaultExclusiveJoinTask": [],
+          "asyncComplete": false,
+          "loopOver": [],
+          "onStateChange": {},
+          "permissive": false
+        }
+      ],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "evaluatorType": "value-param",
+      "expression": "switchCaseValue",
+      "onStateChange": {},
+      "permissive": false
+    }
+  ],
+  "inputParameters": [],
+  "outputParameters": {},
+  "schemaVersion": 2,
+  "restartable": true,
+  "workflowStatusListenerEnabled": false,
+  "ownerEmail": "bpaccda@gmail.com",
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 0,
+  "variables": {},
+  "inputTemplate": {},
+  "enforceSchema": true,
+  "metadata": {}
+}

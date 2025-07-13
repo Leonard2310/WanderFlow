@@ -245,6 +245,8 @@ CONDUCTOR_SERVER_URL=https://developer.orkescloud.com/api
 OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
+To import the workflow, access the Orkes Cloud Console, navigate to the Workflows section, click on Create Workflow → Import JSON, and upload the WanderFlow.json file. For HTTP tasks using OpenRouter, make sure to include the X-OpenRouter-API-Key header with your API token.
+
 ### 3. **Deploy AI-Powered Workflow to Orkes Conductor**
 Ensure your TripMatch_BPA workflow (version 26) is deployed and active in your Orkes Conductor instance with all AI-integrated tasks:
 - `UserPreferences` - Collects and processes user input for AI preference analysis
@@ -261,7 +263,7 @@ Ensure your TripMatch_BPA workflow (version 26) is deployed and active in your O
 ### 4. **Launch the AI-Powered Application**
 ```bash
 # Activate virtual environment
-source BPA_TripMatch/bin/activate
+source venv_folder/bin/activate
 
 # Start Streamlit application with AI backend
 streamlit run app.py
