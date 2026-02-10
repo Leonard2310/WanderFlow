@@ -12,7 +12,7 @@ dacite==1.9.2
 dotenv==0.9.9
 Flask==3.1.1
 folium==0.20.0
-geopandas==1.1.1
+geopandas==1.1.2
 gitdb==4.0.12
 GitPython==3.1.44
 idna==3.10
